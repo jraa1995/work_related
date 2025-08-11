@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced TAR Validation System</title>
+  <base target="_top" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind configuration: extend the default palette with custom GSA colours -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'gsa-blue': '#005ea2',
+            'gsa-red': '#d63384',
+            'gsa-green': '#00a91c',
+            'gsa-yellow': '#ffbe2e',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom styles for the TAR UI. These rules supplement Tailwind classes and
+       ensure that button labels remain visible alongside their icons. Without
+       these overrides some browsers may hide the text portions of action
+       buttons. -->
+  <style>
+    /* Keep uploaded file drop zone border styling consistent */
+    .file-drop-zone {
+      border: 2px dashed #d1d5db;
+      transition: all 0.3s ease;
+    }
+    .file-drop-zone.drag-over {
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+    }
+    /* Progress bar animation */
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    .progress-bar.active {
+      background: linear-gradient(-45deg, #005ea2, #3b82f6, #005ea2, #3b82f6);
+      background-size: 400% 400%;
+      animation: gradient 2s ease infinite;
+    }
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Expense validation card states */
+    .expense-valid { border-color: #10b981; background: #f0fdf4; }
+    .expense-warning { border-color: #f59e0b; background: #fffbeb; }
+    .expense-error { border-color: #ef4444; background: #fef2f2; }
+    /* Ensure icons and labels inside action buttons are visible */
+    .actions button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .actions button span {
+      display: inline;
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gsa-blue mb-2">Enhanced TAR Validation System</h1>
+      <p class="text-gray-600">Automated validation with GSA per diem rates, miscellaneous expense analysis, and
+        workflow management</p>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-6">
+      <div class="bg-gray-200 rounded-full h-2">
+        <div id="progress-bar" class="progress-bar bg-gsa-blue h-2 rounded-full"></div>
+      </div>
+      <p id="progress-text" class="text-sm text-gray-600 mt-1">Ready to validate...</p>
+    </div>
+
+    <!-- Main Form -->
+    <div class="max-w-6xl mx-auto">
+      <form id="tar-form" onsubmit="handleSubmit(event)" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+
+        <!-- Document Upload Section -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">📄 Document Upload</h2>
+          <div id="file-drop-zone" class="file-drop-zone p-8 text-center rounded-lg mb-4">
+            <div class="text-gray-400 mb-4">
+              <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path
+                  d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="text-lg font-medium text-gray-900 mb-2">Upload GSA Form 87 or TAR Document</div>
+            <div class="text-sm text-gray-500 mb-4">Drag and drop your PDF or Word document here, or click to browse
+            </div>
+            <input type="file" name="tarFile" id="tarFile" accept="application/pdf,.doc,.docx" class="hidden" onchange="handleFileSelect(event)">
+            <button type="button" onclick="document.getElementById('tarFile').click()" class="bg-gsa-blue text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+              Browse Files
+            </button>
+          </div>
+          <div id="file-info" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center flex-wrap gap-2">
+                <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                    d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                <span id="file-name" class="text-blue-700 font-medium"></span>
+                <span id="file-size" class="text-blue-500 text-sm"></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="extractDataFromPdf()" class="bg-gsa-green text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm flex items-center gap-1">
+                  <span>🔍</span><span>Extract Data</span>
+                </button>
+                <!-- New button to allow users to remove the currently uploaded file -->
+                <button type="button" onclick="removeSelectedFile()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm flex items-center gap-1">
+                  <span>🗑️</span><span>Remove File</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk CSV Upload Section -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">📦 Bulk CSV Upload</h2>
+          <div id="bulk-drop-zone" class="file-drop-zone p-8 text-center rounded-lg mb-4">
+            <div class="text-gray-400 mb-4">
+              <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="text-lg font-medium text-gray-900 mb-2">Upload CSV for Bulk TAR Validation</div>
+            <div class="text-sm text-gray-500 mb-4">Drag and drop your CSV file here, or click to browse</div>
+            <input type="file" id="bulkFile" accept=".csv,text/csv" class="hidden" onchange="handleBulkFileSelect(event)">
+            <button type="button" onclick="document.getElementById('bulkFile').click()" class="bg-gsa-blue text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+              Browse CSV
+            </button>
+            <div id="bulk-file-info" class="hidden mt-4">
+              <span id="bulk-file-name" class="text-blue-700 font-medium"></span>
+              <span id="bulk-file-size" class="text-blue-500 text-sm ml-2"></span>
+            </div>
+            <button type="button" id="process-bulk-btn" onclick="processBulkCsv()" disabled class="mt-4 bg-gsa-green text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors">
+              🔁 Process Bulk
+            </button>
+          </div>
+          <div id="bulk-results" class="hidden bg-white border border-gray-200 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Bulk Validation Results</h3>
+            <div id="bulk-results-content" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Contract & Project Information -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">📋 Contract & Project Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Contract Type *</label>
+              <select name="contractType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+                <option value="">Select Contract Type</option>
+                <option value="Time and Material">Time and Material (T&M)</option>
+                <option value="Fixed Price">Fixed Price</option>
+                <option value="Cost Plus">Cost Plus</option>
+                <option value="IDIQ">IDIQ (Indefinite Delivery/Indefinite Quantity)</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+              <input type="text" name="projectName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+            </div>
+            <div class="relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Task Order Number (Award PIID) *</label>
+              <input type="text" name="taskOrder" id="taskOrderInput" required autocomplete="off" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="Type to search task orders...">
+              <div id="taskOrderSuggestions"
+                class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden max-h-40 overflow-y-auto">
+                <!-- Suggestions will be populated here -->
+              </div>
+              <div id="fundingInfo" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <span class="text-sm font-medium text-blue-800">Available Funding:</span>
+                    <span id="availableFunding" class="text-lg font-bold text-blue-600 ml-2">$0.00</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs text-blue-600">Project Manager</div>
+                    <div id="projectManager" class="text-sm font-medium text-blue-800">-</div>
+                  </div>
+                </div>
+                <div id="fundingWarning" class="mt-2 text-sm hidden"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Traveler Information -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">👤 Traveler Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Name of Traveler *</label>
+              <input type="text" name="traveler" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Point of Contact (POC)</label>
+              <input type="text" name="poc" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+            </div>
+            <div class="relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Gov Approval Authority</label>
+              <input type="text" name="authority" id="authorityInput" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="Auto-filled from task order selection">
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Information -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">✈️ Trip Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Trip Start Date *</label>
+              <input type="date" name="tripStartDate" required onchange="calculateDuration()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Trip End Date *</label>
+              <input type="date" name="tripEndDate" required onchange="calculateDuration()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Duration (Days)</label>
+              <input type="number" name="duration" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" placeholder="Auto-calculated">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Trip Report Date</label>
+              <input type="date" name="tripDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Destination City *</label>
+              <input type="text" name="city" required onchange="fetchPerDiemRates()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="Washington">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+              <input type="text" name="state" required maxlength="2" onchange="fetchPerDiemRates()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent uppercase" placeholder="DC">
+            </div>
+          </div>
+        </div>
+
+        <!-- Enhanced Expense Breakdown -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">💰 Expense Breakdown</h2>
+
+          <!-- Per Diem Section -->
+          <div class="expense-card mb-4">
+            <h3 class="font-semibold text-blue-800 mb-3">📊 Per Diem Expenses (Auto-calculated from GSA rates)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Meals & Incidentals</label>
+                <input type="number" step="0.01" name="mealsCost" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" placeholder="Auto-calculated">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Lodging</label>
+                <input type="number" step="0.01" name="lodgingCost" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" placeholder="Auto-calculated">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Per Diem Total</label>
+                <input type="number" step="0.01" name="perDiemTotal" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-blue-50 font-bold" placeholder="0.00">
+              </div>
+            </div>
+          </div>
+
+          <!-- Transportation Section -->
+          <div class="expense-card mb-4">
+            <h3 class="font-semibold text-green-800 mb-3">🚗 Transportation Expenses</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Airfare</label>
+                <input type="number" step="0.01" name="airfare" onchange="validateAndCalculate()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="0.00">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Car Rental *</label>
+                <input type="number" step="0.01" name="carRental" onchange="validateCarRental(this)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="0.00">
+                <div id="carRentalValidation" class="text-xs mt-1"></div>
+                <p class="text-xs text-gray-500 mt-1">Daily limits: Compact $45, Midsize $55, Full $75</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ground Transportation</label>
+                <input type="number" step="0.01" name="transportation" onchange="validateAndCalculate()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="0.00">
+                <p class="text-xs text-gray-500 mt-1">Taxi, Uber, Lyft, etc.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Parking *</label>
+                <input type="number" step="0.01" name="parking" onchange="validateParking(this)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="0.00">
+                <div id="parkingValidation" class="text-xs mt-1"></div>
+                <p class="text-xs text-gray-500 mt-1">Daily limit: $25</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Expenses Section -->
+          <div class="expense-card mb-4">
+            <h3 class="font-semibold text-yellow-800 mb-3">📋 Other Expenses</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Conference/Training Fees *</label>
+                <input type="number" step="0.01" name="conferenceFee" onchange="validateConferenceFee(this)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="0.00">
+                <div id="conferenceValidation" class="text-xs mt-1"></div>
+                <p class="text-xs text-gray-500 mt-1">Max: $2,000 (Pre-approval required >$1,000)</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Miscellaneous *</label>
+                <input type="number" step="0.01" name="miscellaneous" onchange="validateMiscellaneous(this)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="0.00">
+                <div id="miscValidation" class="text-xs mt-1"></div>
+                <p class="text-xs text-gray-500 mt-1">Baggage fees, tips, etc.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Other Expenses Total</label>
+                <input type="number" step="0.01" name="otherExpensesTotal" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-yellow-50 font-bold" placeholder="0.00">
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Cost Section -->
+          <div class="expense-card bg-gray-50 border-2 border-gray-300">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <label class="block text-lg font-medium text-gray-700">Total Trip Cost *</label>
+                <p class="text-sm text-gray-500">This should equal the sum of all expenses above</p>
+              </div>
+              <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Auto-Calculated Total</label>
+                  <input type="number" step="0.01" name="calculatedTotal" readonly class="w-48 px-3 py-2 border border-gray-300 rounded-lg bg-green-50 font-bold text-lg" placeholder="0.00">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Claimed Total</label>
+                  <input type="number" step="0.01" name="totalCost" required onchange="validateTotalCost()" class="w-48 px-3 py-2 border-2 border-gsa-blue rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent font-bold text-lg" placeholder="0.00">
+                </div>
+              </div>
+            </div>
+            <div id="totalCostValidation" class="mt-2"></div>
+          </div>
+        </div>
+
+        <!-- Expense Validation Summary -->
+        <div id="expenseValidationSummary" class="mb-8 hidden">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">🔍 Expense Validation Summary</h2>
+          <div id="validationSummaryContent" class="space-y-2"></div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">📝 Additional Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Purpose of the Trip</label>
+              <textarea name="purpose" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="Describe the purpose of the trip..."></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Knowledge Gained</label>
+              <textarea name="knowledge" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="Describe the knowledge gained from the trip..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions flex flex-col sm:flex-row gap-4">
+          <!-- Validation button: includes an icon and text and expands to fill available space on larger screens -->
+          <button type="submit" id="submit-btn" class="flex-1 bg-gsa-blue text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium flex items-center justify-center gap-2">
+            <span>🔍</span><span id="submit-text">Validate Trip</span>
+            <!-- Loading spinner shown during validation -->
+            <svg id="loading-icon" class="loading inline w-4 h-4 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+          <!-- Auto‑calculate claimed total from the auto‑calculated total -->
+          <button type="button" onclick="autoCalculateTotal()" class="bg-gsa-green text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
+            <span>📊</span><span>Auto‑Calculate</span>
+          </button>
+          <!-- Clear all form fields and reset state -->
+          <button type="button" onclick="clearForm()" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+            <span>🗑️</span><span>Clear Form</span>
+          </button>
+          <!-- Test connectivity with the GSA API -->
+          <button type="button" onclick="testGSAConnection()" class="bg-gsa-yellow text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2">
+            <span>🔗</span><span>Test GSA API</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Results Section -->
+      <div id="result" class="hidden bg-white rounded-lg shadow-lg p-6 fade-in mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">✅ Validation Results</h2>
+        <div id="result-content"></div>
+      </div>
+
+      <!-- Analyst Review Section -->
+      <div id="analystReviewSection" class="hidden bg-white rounded-lg shadow-lg p-6 fade-in mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">👨‍💼 Analyst Review & Approval</h2>
+
+        <div class="space-y-6">
+          <!-- Validation Status Display -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Overall Validation Status</label>
+            <div id="validationStatusDisplay" class="p-4 rounded-lg border"></div>
+          </div>
+
+          <!-- Detailed Expense Analysis -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Detailed Expense Analysis</label>
+            <div id="expenseAnalysisDisplay" class="p-4 rounded-lg border bg-white space-y-3"></div>
+          </div>
+
+          <!-- Risk Assessment -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Risk Assessment</label>
+            <div id="riskAssessmentDisplay" class="p-4 rounded-lg border bg-white"></div>
+          </div>
+
+          <!-- Analyst Comments -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Analyst Comments & Recommendations *</label>
+            <textarea id="analystComments" name="analystComments" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gsa-blue focus:border-transparent" placeholder="Provide your detailed analysis, findings, and recommendations for management review..."></textarea>
+          </div>
+
+          <!-- Analyst Actions -->
+          <div class="border-t pt-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">Analyst Decision</h3>
+            <div class="flex flex-wrap gap-4">
+              <button type="button" onclick="analystApprove()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                ✅ Approve for Management Review
+              </button>
+              <button type="button" onclick="analystReject()" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                ❌ Reject - Needs Revision
+              </button>
+              <button type="button" onclick="requestMoreInfo()" class="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors">
+                ℹ️ Request Additional Information
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per Diem Breakdown -->
+      <div id="breakdown" class="hidden bg-white rounded-lg shadow-lg p-6 mt-6 fade-in">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">📊 Per Diem Breakdown</h2>
+        <div id="breakdown-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Management Review Document Modal -->
+  <div id="managementModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-800">📄 Management Review Document Generated</h3>
+            <button onclick="closeManagementModal()" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div id="modalContent" class="prose max-w-none"></div>
+          <div class="mt-6 flex gap-4">
+            <button onclick="downloadPDF()" class="bg-gsa-blue text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+              📥 Download PDF
+            </button>
+            <button onclick="emailToManagement()" class="bg-gsa-green text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors">
+              📧 Email to Management
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Load configuration and front-end logic -->
+    <script src="config.js"></script>
+    <script src="client.js"></script>
+  </body>
+  </html>

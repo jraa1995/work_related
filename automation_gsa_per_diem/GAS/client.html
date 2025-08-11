@@ -1,0 +1,1189 @@
+<!--
+  client.html
+
+  This file contains all the client‑side logic for the Enhanced TAR
+  Validation System when deployed on Google Apps Script.  The
+  JavaScript is wrapped in a <script> tag so that it executes in
+  the browser context.  All references to CommonJS modules and
+  Node.js specific code have been removed.  Functions that are
+  referenced from inline HTML attributes (e.g. onchange, onsubmit)
+  are explicitly attached to the global window object to avoid
+  ReferenceError exceptions within the Apps Script environment.
+-->
+<script>
+// Global state used throughout the application
+var fundingData = [];
+var selectedTaskOrder = null;
+var expenseValidations = {};
+var perDiemRates = null;
+var currentValidation = null;
+var currentFile = null;
+var currentBulkFile = null; // holds the CSV file selected for bulk processing
+
+// Initialise the page once the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+  var loadingIcon = document.getElementById('loading-icon');
+  var progressBar = document.getElementById('progress-bar');
+  if (loadingIcon) loadingIcon.style.display = 'none';
+  if (progressBar) progressBar.classList.remove('active');
+  setupEventListeners();
+  loadFundingData();
+});
+
+/**
+ * Handle selection of a file from the hidden file input.  This
+ * function exists to support the inline onchange="handleFileSelect(event)"
+ * attribute on the file input in index.html.  It mirrors the
+ * behaviour of the internal handleSelectedFile() helper used in
+ * setupDragAndDrop().  When a user picks a file via the file
+ * picker, this function updates the global currentFile reference
+ * and displays the file information panel.
+ *
+ * @param {Event} event The change event from the file input
+ */
+function handleFileSelect(event) {
+  var file = event && event.target && event.target.files ? event.target.files[0] : null;
+  if (!file) return;
+  currentFile = file;
+  var fileInfo = document.getElementById('file-info');
+  var fileNameSpan = document.getElementById('file-name');
+  var fileSizeSpan = document.getElementById('file-size');
+  if (fileInfo && fileNameSpan && fileSizeSpan) {
+    fileInfo.classList.remove('hidden');
+    fileNameSpan.textContent = file.name;
+    // Display size in KB with one decimal place
+    var sizeInKB = (file.size / 1024).toFixed(1);
+    fileSizeSpan.textContent = sizeInKB + ' KB';
+  }
+}
+
+/**
+ * Handle selection of a CSV file for bulk processing.  When the
+ * user picks a file via the file picker in the bulk upload
+ * section this function validates the extension, stores the
+ * reference in currentBulkFile, displays the file name/size and
+ * enables the "Process Bulk" button.
+ *
+ * @param {Event} event The change event from the CSV file input
+ */
+function handleBulkFileSelect(event) {
+  var file = event && event.target && event.target.files ? event.target.files[0] : null;
+  if (!file) return;
+  var fileNameLower = file.name.toLowerCase();
+  if (!fileNameLower.endsWith('.csv')) {
+    showError('Please select a valid CSV file');
+    return;
+  }
+  currentBulkFile = file;
+  var infoDiv = document.getElementById('bulk-file-info');
+  var nameSpan = document.getElementById('bulk-file-name');
+  var sizeSpan = document.getElementById('bulk-file-size');
+  if (infoDiv && nameSpan && sizeSpan) {
+    nameSpan.textContent = file.name;
+    var sizeKB = (file.size / 1024).toFixed(1);
+    sizeSpan.textContent = '(' + sizeKB + ' KB)';
+    infoDiv.classList.remove('hidden');
+  }
+  var btn = document.getElementById('process-bulk-btn');
+  if (btn) btn.disabled = false;
+  showSuccess('✅ CSV file selected. Ready to process.');
+}
+
+/**
+ * Read the selected CSV file and begin bulk validation.  This
+ * function uses FileReader to load the file contents, parses the
+ * CSV into an array of records, then processes each record
+ * asynchronously.  Progress is updated for user feedback and
+ * results are displayed in a collapsible list.
+ */
+function processBulkCsv() {
+  if (!currentBulkFile) {
+    showError('Please select a CSV file first');
+    return;
+  }
+  updateProgress(10, 'Reading CSV data...');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target && e.target.result ? e.target.result : '';
+    var records = parseCsv(text);
+    if (!records || records.length === 0) {
+      showError('No valid data found in CSV file');
+      updateProgress(0, 'Ready to validate...');
+      return;
+    }
+    processBulkRecords(records);
+  };
+  reader.onerror = function() {
+    showError('Failed to read CSV file');
+    updateProgress(0, 'Ready to validate...');
+  };
+  reader.readAsText(currentBulkFile);
+}
+
+/**
+ * Split a single CSV line into an array of values.  This helper
+ * respects quoted values that may contain commas.  Leading/trailing
+ * quotes are removed and whitespace is trimmed.
+ *
+ * @param {string} line A single line from a CSV file
+ * @returns {string[]} Array of parsed fields
+ */
+function splitCsvLine(line) {
+  var result = [];
+  var current = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++) {
+    var char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result.map(function(s) { return s.trim(); });
+}
+
+/**
+ * Parse a CSV string into an array of objects keyed by the header
+ * row.  Empty lines are ignored.  If a row has a different
+ * number of fields than the header, it is skipped.  This parser
+ * is intentionally simple and assumes double quotes are used only
+ * to wrap fields containing commas.
+ *
+ * @param {string} text Raw CSV file contents
+ * @returns {Object[]} Array of records where keys are header names
+ */
+function parseCsv(text) {
+  var lines = text.split(/\r?\n/).filter(function(l) { return l && l.trim().length > 0; });
+  if (lines.length < 2) return [];
+  var headers = splitCsvLine(lines[0]);
+  var records = [];
+  for (var i = 1; i < lines.length; i++) {
+    var values = splitCsvLine(lines[i]);
+    if (values.length !== headers.length) continue;
+    var record = {};
+    headers.forEach(function(h, idx) {
+      record[h] = values[idx];
+    });
+    records.push(record);
+  }
+  return records;
+}
+
+/**
+ * Convert a CSV record into a format expected by the validation
+ * engine.  It extracts key fields such as traveler name,
+ * city/state, trip dates and costs.  Missing or malformed data
+ * is tolerated where possible.  Dates are normalised to
+ * YYYY-MM-DD ISO format.
+ *
+ * @param {Object} record The raw CSV row keyed by column names
+ * @returns {Object} Normalised TAR data suitable for
+ *          validateTarWithPerDiem
+ */
+function mapRecordToTarData(record) {
+  var dest = record['Destination (City, State, Country)'] || '';
+  var destParts = dest.split(',');
+  var city = destParts[0] ? destParts[0].trim() : '';
+  var state = '';
+  if (destParts.length > 1) {
+    state = destParts[1].trim();
+    if (state.length > 2) state = state.substring(0, 2);
+    state = state.toUpperCase();
+  }
+  var startRaw = record['Departure Date'] || record['Date Submitted'] || '';
+  var endRaw = record['Return Date'] || '';
+  var parseDate = function(d) {
+    if (!d) return '';
+    var date = new Date(d);
+    if (isNaN(date)) return '';
+    return date.toISOString().split('T')[0];
+  };
+  var tarData = {
+    traveler: record.Traveler || record['TAR Title'] || 'Unknown',
+    city: city,
+    state: state,
+    tripStartDate: parseDate(startRaw),
+    tripEndDate: parseDate(endRaw),
+    duration: '',
+    totalCost: parseFloat(record['Total Actual Cost']) || 0,
+    estimatedCost: parseFloat(record['Total Travel Estimate']) || 0,
+    purpose: record['Travel Purpose'] || record.Comments || '',
+    knowledge: '',
+    taskOrder: record['Contract Specific ID'] || record['Charge Number'] || '',
+    projectName: record['TAR Title'] || '',
+    contractType: 'Other',
+    poc: record.Creator || '',
+    authority: '',
+    conferenceFee: 0,
+    miscellaneous: 0,
+    mealsCost: 0,
+    lodgingCost: 0,
+    perDiemTotal: 0,
+    transportation: 0,
+    carRental: 0,
+    parking: 0
+  };
+  return tarData;
+}
+
+/**
+ * Consolidate records with the same TAR ID and process them
+ * sequentially.  Aggregated data is derived from multiple rows,
+ * including earliest start and latest end dates, summed cost
+ * values, and chosen destination and purpose fields.  Each
+ * aggregated record is passed to validateTarWithPerDiem via
+ * google.script.run (if available).  Results are appended to
+ * the bulk results panel.
+ *
+ * @param {Object[]} records Raw CSV records
+ */
+async function processBulkRecords(records) {
+  // Build grouping dictionary keyed by TAR ID
+  var grouped = {};
+  records.forEach(function(rec) {
+    var id = rec['TAR ID'] || '';
+    if (!id) return;
+    if (!grouped[id]) grouped[id] = [];
+    grouped[id].push(rec);
+  });
+  // Convert groups into aggregated records
+  var aggregated = Object.keys(grouped).map(function(id) {
+    var recs = grouped[id];
+    var base = recs[0];
+    var agg = {};
+    for (var prop in base) {
+      if (base.hasOwnProperty(prop)) {
+        agg[prop] = base[prop];
+      }
+    }
+    // Earliest departure/date submitted and latest return
+    var startDate = null;
+    var endDate = null;
+    recs.forEach(function(r) {
+      var s = r['Departure Date'] || r['Date Submitted'] || '';
+      var e = r['Return Date'] || '';
+      if (s) {
+        var sd = new Date(s);
+        if (!isNaN(sd)) {
+          if (!startDate || sd < startDate) startDate = sd;
+        }
+      }
+      if (e) {
+        var ed = new Date(e);
+        if (!isNaN(ed)) {
+          if (!endDate || ed > endDate) endDate = ed;
+        }
+      }
+    });
+    if (startDate) agg['Departure Date'] = startDate.toISOString().split('T')[0];
+    if (endDate) agg['Return Date'] = endDate.toISOString().split('T')[0];
+    // Use first non-empty destination and purpose/comment
+    var destRec = recs.find(function(r) {
+      return r['Destination (City, State, Country)'] && r['Destination (City, State, Country)'].trim().length > 0;
+    });
+    if (destRec) agg['Destination (City, State, Country)'] = destRec['Destination (City, State, Country)'];
+    var purposeRec = recs.find(function(r) {
+      return r['Travel Purpose'] && r['Travel Purpose'].trim().length > 0;
+    });
+    var commentRec = recs.find(function(r) {
+      return r['Comments'] && r['Comments'].trim().length > 0;
+    });
+    agg['Travel Purpose'] = purposeRec ? purposeRec['Travel Purpose'] : (commentRec ? commentRec['Comments'] : '');
+    // Aggregate cost values: sum Cost Type Value across all rows if Total Actual Cost missing
+    var baseTotal = parseFloat(base['Total Actual Cost']) || 0;
+    var sumCost = recs.reduce(function(sum, r) {
+      var val = parseFloat(r['Cost Type Value']) || 0;
+      return sum + val;
+    }, 0);
+    var totalActual = baseTotal || sumCost;
+    agg['Total Actual Cost'] = totalActual ? totalActual.toString() : '0';
+    // Estimated cost: use first non-zero Total Travel Estimate
+    var estRec = recs.find(function(r) { return parseFloat(r['Total Travel Estimate']) > 0; });
+    agg['Total Travel Estimate'] = estRec ? estRec['Total Travel Estimate'] : (base['Total Travel Estimate'] || '');
+    return agg;
+  });
+  // Prepare result display
+  var resultsSection = document.getElementById('bulk-results');
+  var container = document.getElementById('bulk-results-content');
+  if (container) container.innerHTML = '';
+  if (resultsSection) resultsSection.classList.remove('hidden');
+  var total = aggregated.length;
+  var processed = 0;
+  updateProgress(20, 'Processing ' + total + ' record' + (total === 1 ? '' : 's') + '...');
+  // Process each aggregated TAR
+  for (var idx = 0; idx < aggregated.length; idx++) {
+    var agg = aggregated[idx];
+    var tarId = agg['TAR ID'] || '';
+    var data = mapRecordToTarData(agg);
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      await new Promise(function(resolve) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            addBulkResultRow(tarId, res);
+            processed += 1;
+            updateProgress(20 + (processed / total) * 80, 'Processed ' + processed + '/' + total + ' record' + (total === 1 ? '' : 's') + '...');
+            resolve();
+          })
+          .withFailureHandler(function(err) {
+            addBulkResultRow(tarId, { success: false, errors: [err && err.message ? err.message : 'Unknown error'] });
+            processed += 1;
+            updateProgress(20 + (processed / total) * 80, 'Processed ' + processed + '/' + total + ' record' + (total === 1 ? '' : 's') + '...');
+            resolve();
+          })
+          .validateTarWithPerDiem(data);
+      });
+    } else {
+      addBulkResultRow(tarId, { success: false, errors: ['Offline mode: bulk validation not available'] });
+      processed += 1;
+      updateProgress(20 + (processed / total) * 80, 'Processed ' + processed + '/' + total + ' record' + (total === 1 ? '' : 's') + '...');
+    }
+  }
+  updateProgress(0, 'Ready to validate...');
+  showSuccess('✅ Bulk processing complete');
+}
+
+/**
+ * Register all event handlers needed by the UI.  Sets up
+ * autocomplete, drag-and-drop, input validators, and attaches
+ * handlers to the appropriate DOM elements.
+ */
+function setupEventListeners() {
+  // Auto-uppercase state abbreviation
+  var stateInput = document.querySelector('input[name="state"]');
+  if (stateInput) {
+    stateInput.addEventListener('input', function(e) {
+      e.target.value = e.target.value.toUpperCase();
+    });
+  }
+  // Calculate trip duration whenever dates change
+  var startInput = document.querySelector('input[name="tripStartDate"]');
+  var endInput = document.querySelector('input[name="tripEndDate"]');
+  if (startInput && endInput) {
+    startInput.addEventListener('change', calculateDuration);
+    endInput.addEventListener('change', calculateDuration);
+  }
+  // Set up the task order autocomplete
+  setupTaskOrderAutocomplete();
+  // Enable drag and drop for file uploads
+  setupDragAndDrop();
+  // Expense validation hooks
+  var carInput = document.querySelector('input[name="carRental"]');
+  var parkInput = document.querySelector('input[name="parking"]');
+  var conferenceInput = document.querySelector('input[name="conferenceFee"]');
+  var miscInput = document.querySelector('input[name="miscellaneous"]');
+  if (carInput) carInput.addEventListener('input', function() { validateCarRental(carInput); });
+  if (parkInput) parkInput.addEventListener('input', function() { validateParking(parkInput); });
+  if (conferenceInput) conferenceInput.addEventListener('input', function() { validateConferenceFee(conferenceInput); });
+  if (miscInput) miscInput.addEventListener('input', function() { validateMiscellaneous(miscInput); });
+}
+
+/**
+ * Update the progress bar and text indicator.  A non‑zero
+ * percentage activates the animated background to provide
+ * feedback during long running operations such as document
+ * extraction or API calls.
+ * @param {number} percent The percentage complete (0–100)
+ * @param {string} text A short message to accompany the progress bar
+ */
+function updateProgress(percent, text) {
+  var bar = document.getElementById('progress-bar');
+  var label = document.getElementById('progress-text');
+  if (bar) {
+    bar.style.width = percent + '%';
+    if (percent > 0 && percent < 100) {
+      bar.classList.add('active');
+    } else {
+      bar.classList.remove('active');
+    }
+  }
+  if (label) {
+    label.textContent = text || '';
+  }
+}
+
+// Notification helpers. These functions wrap the progress bar
+// indicator to provide simple success/warning/error messages.
+function showSuccess(msg) {
+  updateProgress(100, msg);
+  setTimeout(function() { updateProgress(0, 'Ready to validate...'); }, 2000);
+}
+function showError(msg) {
+  updateProgress(0, msg);
+}
+function showWarning(msg) {
+  updateProgress(0, msg);
+}
+
+// Funding data lookup.  If a server function getFundingData
+// exists, call it; otherwise use demo data for local testing.
+function loadFundingData() {
+  updateProgress(10, 'Loading funding data...');
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result && result.success) {
+          fundingData = result.data;
+          updateProgress(100, 'Loaded ' + fundingData.length + ' funding records successfully');
+          setTimeout(function() { updateProgress(0, 'Ready to validate...'); }, 1000);
+        } else {
+          showError('Failed to load funding data: ' + (result && result.error ? result.error : 'Unknown error'));
+          updateProgress(0, 'Ready to validate...');
+          loadFallbackFundingData();
+        }
+      })
+      .withFailureHandler(function(error) {
+        showError('Failed to load funding data');
+        updateProgress(0, 'Ready to validate...');
+        loadFallbackFundingData();
+      })
+      .getFundingData();
+  } else {
+    // Offline mode: use demo data
+    loadFallbackFundingData();
+  }
+}
+
+// Demo funding data for local testing when google.script.run is unavailable
+function loadFallbackFundingData() {
+  fundingData = [
+    { awardPiid: 'TO-2025-DTI-001', pm: 'Sarah Johnson', funding: 125000.0 },
+    { awardPiid: 'TO-2025-DTI-002', pm: 'Michael Chen', funding: 87500.0 },
+    { awardPiid: 'TO-2025-CLD-003', pm: 'Jennifer Davis', funding: 210000.0 },
+    { awardPiid: 'TO-2025-SEC-004', pm: 'Robert Wilson', funding: 156000.0 },
+    { awardPiid: 'TO-2025-NET-005', pm: 'Lisa Anderson', funding: 98750.0 },
+    { awardPiid: 'TO-2025-APP-006', pm: 'David Brown', funding: 175000.0 },
+    { awardPiid: 'TO-2025-INF-007', pm: 'Maria Garcia', funding: 134500.0 },
+    { awardPiid: 'TO-2025-SUP-008', pm: 'James Miller', funding: 67200.0 }
+  ];
+  showSuccess('Demo funding data loaded for testing purposes');
+}
+
+// Setup task order autocomplete functionality
+function setupTaskOrderAutocomplete() {
+  var taskOrderInput = document.getElementById('taskOrderInput');
+  var suggestionsDiv = document.getElementById('taskOrderSuggestions');
+  if (!taskOrderInput || !suggestionsDiv) return;
+  taskOrderInput.addEventListener('input', function(e) {
+    var query = e.target.value.trim().toLowerCase();
+    if (query.length < 2) {
+      hideSuggestions();
+      return;
+    }
+    var matches = fundingData.filter(function(item) {
+      return item.awardPiid.toLowerCase().includes(query) || item.pm.toLowerCase().includes(query);
+    });
+    showSuggestions(matches, query);
+  });
+  taskOrderInput.addEventListener('blur', function() {
+    setTimeout(function() { hideSuggestions(); }, 200);
+  });
+  taskOrderInput.addEventListener('focus', function() {
+    if (this.value.length >= 2) {
+      var query = this.value.trim().toLowerCase();
+      var matches = fundingData.filter(function(item) {
+        return item.awardPiid.toLowerCase().includes(query) || item.pm.toLowerCase().includes(query);
+      });
+      showSuggestions(matches, query);
+    }
+  });
+}
+
+function showSuggestions(matches, query) {
+  var suggestionsDiv = document.getElementById('taskOrderSuggestions');
+  if (!suggestionsDiv) return;
+  if (matches.length === 0) {
+    suggestionsDiv.innerHTML = '<div class="p-3 text-sm text-gray-500">No matching task orders found</div>';
+    suggestionsDiv.classList.remove('hidden');
+    return;
+  }
+  var suggestionsHTML = matches
+    .map(function(item) {
+      return (
+        '<div class="suggestion-item p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0" ' +
+        'onclick="selectTaskOrder(\'' + item.awardPiid + '\', \' ' + item.pm.replace(/'/g, '&#39;') + '\', ' + item.funding + ')">' +
+        '<div class="flex justify-between items-start">' +
+        '<div>' +
+        '<div class="font-medium text-gray-900">' + highlightMatch(item.awardPiid, query) + '</div>' +
+        '<div class="text-sm text-gray-600">PM: ' + highlightMatch(item.pm, query) + '</div>' +
+        '</div>' +
+        '<div class="text-right">' +
+        '<div class="text-sm font-semibold text-green-600">' + item.funding.toLocaleString() + '</div>' +
+        '<div class="text-xs text-gray-500">Available</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>'
+      );
+    })
+    .join('');
+  suggestionsDiv.innerHTML = suggestionsHTML;
+  suggestionsDiv.classList.remove('hidden');
+}
+
+function highlightMatch(text, query) {
+  if (!query) return text;
+  var regex = new RegExp('(' + query.replace(/([.*+?^=!:${}()|[\]/\\])/g, '\\$1') + ')', 'gi');
+  return text.replace(regex, '<span class="bg-yellow-200">$1</span>');
+}
+
+function hideSuggestions() {
+  var suggestionsDiv = document.getElementById('taskOrderSuggestions');
+  if (suggestionsDiv) suggestionsDiv.classList.add('hidden');
+}
+
+function selectTaskOrder(awardPiid, pm, funding) {
+  selectedTaskOrder = { awardPiid: awardPiid, pm: pm, funding: funding };
+  var taskOrderInput = document.getElementById('taskOrderInput');
+  var authorityInput = document.getElementById('authorityInput');
+  if (taskOrderInput) taskOrderInput.value = awardPiid;
+  if (authorityInput) authorityInput.value = pm;
+  updateFundingDisplay(funding);
+  hideSuggestions();
+  var totalCostInput = document.querySelector('[name="totalCost"]');
+  if (totalCostInput && totalCostInput.value) {
+    validateFundingAvailability(parseFloat(totalCostInput.value));
+  }
+  showSuccess('✅ Task Order ' + awardPiid + ' selected. PM: ' + pm);
+}
+
+function updateFundingDisplay(funding) {
+  var fundingInfoDiv = document.getElementById('fundingInfo');
+  var availableFundingSpan = document.getElementById('availableFunding');
+  var projectManagerSpan = document.getElementById('projectManager');
+  if (availableFundingSpan) availableFundingSpan.textContent = funding.toLocaleString();
+  if (projectManagerSpan) projectManagerSpan.textContent = selectedTaskOrder.pm;
+  if (fundingInfoDiv) fundingInfoDiv.classList.remove('hidden');
+}
+
+function validateFundingAvailability(requestedAmount) {
+  if (!selectedTaskOrder) return;
+  var availableFunding = selectedTaskOrder.funding;
+  var warningDiv = document.getElementById('fundingWarning');
+  var fundingInfoDiv = document.getElementById('fundingInfo');
+  if (requestedAmount > availableFunding) {
+    warningDiv.innerHTML = '<div class="flex items-center text-red-600"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg><span class="font-medium">⚠️ FUNDING EXCEEDED: Requested ' + requestedAmount.toLocaleString() + ' exceeds available ' + availableFunding.toLocaleString() + '</span></div>';
+    warningDiv.classList.remove('hidden');
+    fundingInfoDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-lg';
+    expenseValidations.funding = { isValid: false, level: 'error', message: '❌ Trip cost exceeds available funding by ' + (requestedAmount - availableFunding).toLocaleString() };
+  } else if (requestedAmount > availableFunding * 0.8) {
+    var remaining = availableFunding - requestedAmount;
+    warningDiv.innerHTML = '<div class="flex items-center text-yellow-600"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg><span class="font-medium">⚠️ HIGH FUNDING USAGE: ' + remaining.toLocaleString() + ' remaining after this trip</span></div>';
+    warningDiv.classList.remove('hidden');
+    fundingInfoDiv.className = 'mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg';
+    expenseValidations.funding = { isValid: true, level: 'warning', message: '⚠️ High funding usage - only ' + remaining.toLocaleString() + ' remaining' };
+  } else {
+    var remainingGreen = availableFunding - requestedAmount;
+    warningDiv.innerHTML = '<div class="flex items-center text-green-600"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg><span class="font-medium">✅ FUNDING OK: ' + remainingGreen.toLocaleString() + ' remaining after this trip</span></div>';
+    warningDiv.classList.remove('hidden');
+    fundingInfoDiv.className = 'mt-2 p-3 bg-green-50 border border-green-200 rounded-lg';
+    expenseValidations.funding = { isValid: true, level: 'success', message: '✅ Funding available - ' + remainingGreen.toLocaleString() + ' remaining' };
+  }
+  updateValidationSummary();
+}
+
+function setupDragAndDrop() {
+  var dropZone = document.getElementById('file-drop-zone');
+  if (!dropZone) return;
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+    dropZone.addEventListener(eventName, function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
+  });
+  ['dragenter', 'dragover'].forEach(function(eventName) {
+    dropZone.addEventListener(eventName, function() {
+      dropZone.classList.add('drag-over');
+    }, false);
+  });
+  ['dragleave', 'drop'].forEach(function(eventName) {
+    dropZone.addEventListener(eventName, function() {
+      dropZone.classList.remove('drag-over');
+    }, false);
+  });
+  dropZone.addEventListener('drop', function(e) {
+    var files = e.dataTransfer.files;
+    if (files.length > 0) {
+      validateAndDisplayFile(files[0]);
+    }
+  }, false);
+}
+
+function handleDrop(e) {
+  // Not used directly; included for completeness
+  var files = e.dataTransfer.files;
+  if (files.length > 0) {
+    validateAndDisplayFile(files[0]);
+  }
+}
+
+
+function validateAndDisplayFile(file) {
+  var maxSize = 10 * 1024 * 1024; // 10MB
+  var allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (file.size > maxSize) {
+    showError('File size exceeds 10MB limit');
+    return;
+  }
+  if (allowedTypes.indexOf(file.type) === -1) {
+    showError('Only PDF and Word documents are supported');
+    return;
+  }
+  currentFile = file;
+  var fileNameSpan = document.getElementById('file-name');
+  var fileSizeSpan = document.getElementById('file-size');
+  var fileInfo = document.getElementById('file-info');
+  if (fileNameSpan && fileSizeSpan && fileInfo) {
+    fileNameSpan.textContent = file.name;
+    fileSizeSpan.textContent = '(' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+    fileInfo.classList.remove('hidden');
+  }
+}
+
+// PDF Data Extraction
+function extractDataFromPdf() {
+  if (!currentFile) {
+    showError('Please select a PDF file first');
+    return;
+  }
+  updateProgress(20, 'Extracting data from PDF...');
+  // Simulate extraction: In Apps Script you could send the file to
+  // server via google.script.run, but for offline testing we
+  // demonstrate the UI flow.
+  setTimeout(function() {
+    var extractedData = {
+      contractType: 'Time and Material',
+      projectName: 'Digital Transformation Initiative - Phase 2',
+      taskOrder: 'TO-2025-DTI-002',
+      traveler: 'Sarah Johnson',
+      poc: 'Michael Chen',
+      authority: 'Director, IT Operations',
+      tripStartDate: '2025-03-15',
+      tripEndDate: '2025-03-18',
+      tripDate: '2025-02-28',
+      city: 'San Francisco',
+      state: 'CA',
+      airfare: 485.0,
+      carRental: 225.0,
+      parking: 120.0,
+      conferenceFee: 1350.0,
+      miscellaneous: 95.0,
+      totalCost: 2875.0,
+      purpose: 'Attend CloudTech Summit 2025 and conduct vendor meetings for new cloud infrastructure implementation',
+      knowledge: 'Latest cloud security protocols, vendor capabilities assessment, and best practices for enterprise cloud migration'
+    };
+    populateFormWithExtractedData(extractedData);
+    updateProgress(100, 'PDF data extraction completed successfully!');
+    setTimeout(function() { updateProgress(0, 'Ready to validate...'); }, 2000);
+  }, 1500);
+}
+
+function populateFormWithExtractedData(data) {
+  Object.keys(data).forEach(function(key) {
+    var field = document.querySelector('[name="' + key + '"]');
+    if (field) {
+      field.value = data[key];
+      if (typeof field.onchange === 'function') field.onchange();
+    }
+  });
+  if (data.taskOrder) {
+    var matching = fundingData.find(function(item) {
+      return item.awardPiid === data.taskOrder || item.awardPiid.toLowerCase().includes(data.taskOrder.toLowerCase());
+    });
+    if (matching) {
+      selectTaskOrder(matching.awardPiid, matching.pm, matching.funding);
+    } else {
+      document.getElementById('taskOrderInput').value = data.taskOrder;
+      showError('⚠️ Task order "' + data.taskOrder + '" not found in funding database. Please verify.');
+    }
+  }
+  calculateDuration();
+  setTimeout(function() {
+    fetchPerDiemRates();
+    validateAndCalculate();
+  }, 500);
+  showSuccess('✅ Data extracted and form populated successfully!');
+}
+
+// Trip Duration Calculation
+function calculateDuration() {
+  var startDate = document.querySelector('[name="tripStartDate"]').value;
+  var endDate = document.querySelector('[name="tripEndDate"]').value;
+  if (startDate && endDate) {
+    var start = new Date(startDate);
+    var end = new Date(endDate);
+    if (start <= end) {
+      var diffTime = Math.abs(end - start);
+      var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      document.querySelector('[name="duration"]').value = diffDays;
+      document.querySelector('[name="duration"]').style.backgroundColor = '#f0f9ff';
+    } else {
+      document.querySelector('[name="duration"]').value = '';
+      showError('End date must be after start date');
+    }
+  }
+}
+
+// GSA Per Diem Rate Fetching
+function fetchPerDiemRates() {
+  var city = document.querySelector('[name="city"]').value;
+  var state = document.querySelector('[name="state"]').value;
+  if (!city || !state) return;
+  try {
+    updateProgress(30, 'Fetching GSA per diem rates...');
+    // Simulate API call.  In Apps Script you would call a server function.
+    var simulatedRates = { meals: 79, lodging: 205 };
+    var duration = parseInt(document.querySelector('[name="duration"]').value) || 1;
+    var mealsTotal = simulatedRates.meals * duration;
+    var lodgingTotal = simulatedRates.lodging * duration;
+    var perDiemTotal = mealsTotal + lodgingTotal;
+    document.querySelector('[name="mealsCost"]').value = mealsTotal.toFixed(2);
+    document.querySelector('[name="lodgingCost"]').value = lodgingTotal.toFixed(2);
+    document.querySelector('[name="perDiemTotal"]').value = perDiemTotal.toFixed(2);
+    perDiemRates = { meals: simulatedRates.meals, lodging: simulatedRates.lodging, mealsTotal: mealsTotal, lodgingTotal: lodgingTotal, perDiemTotal: perDiemTotal };
+    updateProgress(50, 'Per diem rates loaded successfully');
+    setTimeout(function() { updateProgress(0, 'Ready to validate...'); }, 1000);
+  } catch (error) {
+    showError('Failed to fetch GSA per diem rates');
+  }
+}
+
+// Enhanced Expense Validation Functions
+function validateCarRental(input) {
+  var value = parseFloat(input.value) || 0;
+  var duration = parseInt(document.querySelector('[name="duration"]').value) || 1;
+  var dailyRate = duration > 0 ? value / duration : value;
+  var validationDiv = document.getElementById('carRentalValidation');
+  var validation = { isValid: true, level: 'success', message: '' };
+  if (value === 0) {
+    validation.message = '';
+    input.classList.remove('border-red-500', 'border-yellow-500', 'border-green-500');
+  } else if (dailyRate > CONFIG.EXPENSE_LIMITS.CAR_RENTAL_MAX_DAILY) {
+    validation.isValid = false;
+    validation.level = 'error';
+    validation.message = '❌ Daily rate (' + dailyRate.toFixed(2) + ') exceeds maximum (' + CONFIG.EXPENSE_LIMITS.CAR_RENTAL_MAX_DAILY + ')';
+    input.classList.add('border-red-500');
+    input.classList.remove('border-yellow-500', 'border-green-500');
+  } else if (value > CONFIG.EXPENSE_LIMITS.CAR_RENTAL_JUSTIFICATION_THRESHOLD) {
+    validation.level = 'warning';
+    validation.message = '⚠️ Total cost requires business justification (>' + CONFIG.EXPENSE_LIMITS.CAR_RENTAL_JUSTIFICATION_THRESHOLD + ')';
+    input.classList.add('border-yellow-500');
+    input.classList.remove('border-red-500', 'border-green-500');
+  } else {
+    validation.message = '✅ Car rental cost is within policy limits (' + dailyRate.toFixed(2) + '/day)';
+    input.classList.add('border-green-500');
+    input.classList.remove('border-red-500', 'border-yellow-500');
+  }
+  validationDiv.textContent = validation.message;
+  validationDiv.className = 'text-xs mt-1 ' + (validation.level === 'error' ? 'text-red-600' : validation.level === 'warning' ? 'text-yellow-600' : 'text-green-600');
+  expenseValidations.carRental = validation;
+  updateValidationSummary();
+  validateAndCalculate();
+}
+function validateParking(input) {
+  var value = parseFloat(input.value) || 0;
+  var duration = parseInt(document.querySelector('[name="duration"]').value) || 1;
+  var dailyRate = duration > 0 ? value / duration : value;
+  var validationDiv = document.getElementById('parkingValidation');
+  var validation = { isValid: true, level: 'success', message: '' };
+  if (value === 0) {
+    validation.message = '';
+    input.classList.remove('border-red-500', 'border-yellow-500', 'border-green-500');
+  } else if (dailyRate > CONFIG.EXPENSE_LIMITS.PARKING_MAX_DAILY) {
+    validation.level = 'warning';
+    validation.message = '⚠️ Daily parking (' + dailyRate.toFixed(2) + ') exceeds recommended limit (' + CONFIG.EXPENSE_LIMITS.PARKING_MAX_DAILY + ')';
+    input.classList.add('border-yellow-500');
+    input.classList.remove('border-red-500', 'border-green-500');
+  } else {
+    validation.message = '✅ Parking cost is within guidelines (' + dailyRate.toFixed(2) + '/day)';
+    input.classList.add('border-green-500');
+    input.classList.remove('border-red-500', 'border-yellow-500');
+  }
+  validationDiv.textContent = validation.message;
+  validationDiv.className = 'text-xs mt-1 ' + (validation.level === 'warning' ? 'text-yellow-600' : 'text-green-600');
+  expenseValidations.parking = validation;
+  updateValidationSummary();
+  validateAndCalculate();
+}
+function validateConferenceFee(input) {
+  var value = parseFloat(input.value) || 0;
+  var validationDiv = document.getElementById('conferenceValidation');
+  var validation = { isValid: true, level: 'success', message: '' };
+  if (value === 0) {
+    validation.message = '';
+    input.classList.remove('border-red-500', 'border-yellow-500', 'border-green-500');
+  } else if (value > CONFIG.EXPENSE_LIMITS.CONFERENCE_FEE_MAX) {
+    validation.isValid = false;
+    validation.level = 'error';
+    validation.message = '❌ Conference fee exceeds maximum allowed (' + CONFIG.EXPENSE_LIMITS.CONFERENCE_FEE_MAX + ')';
+    input.classList.add('border-red-500');
+    input.classList.remove('border-yellow-500', 'border-green-500');
+  } else if (value > CONFIG.EXPENSE_LIMITS.CONFERENCE_JUSTIFICATION_THRESHOLD) {
+    validation.level = 'warning';
+    validation.message = '⚠️ Pre-approval required for fees >' + CONFIG.EXPENSE_LIMITS.CONFERENCE_JUSTIFICATION_THRESHOLD;
+    input.classList.add('border-yellow-500');
+    input.classList.remove('border-red-500', 'border-green-500');
+  } else {
+    validation.message = '✅ Conference fee is within policy limits';
+    input.classList.add('border-green-500');
+    input.classList.remove('border-red-500', 'border-yellow-500');
+  }
+  validationDiv.textContent = validation.message;
+  validationDiv.className = 'text-xs mt-1 ' + (validation.level === 'error' ? 'text-red-600' : validation.level === 'warning' ? 'text-yellow-600' : 'text-green-600');
+  expenseValidations.conferenceFee = validation;
+  updateValidationSummary();
+  validateAndCalculate();
+}
+function validateMiscellaneous(input) {
+  var value = parseFloat(input.value) || 0;
+  var validationDiv = document.getElementById('miscValidation');
+  var validation = { isValid: true, level: 'success', message: '' };
+  if (value === 0) {
+    validation.message = '';
+    input.classList.remove('border-yellow-500', 'border-green-500');
+  } else if (value > CONFIG.EXPENSE_LIMITS.MISC_JUSTIFICATION_THRESHOLD) {
+    validation.level = 'warning';
+    validation.message = '⚠️ Detailed receipts required for misc expenses >' + CONFIG.EXPENSE_LIMITS.MISC_JUSTIFICATION_THRESHOLD;
+    input.classList.add('border-yellow-500');
+    input.classList.remove('border-green-500');
+  } else {
+    validation.message = '✅ Misc expenses within threshold';
+    input.classList.add('border-green-500');
+    input.classList.remove('border-yellow-500');
+  }
+  validationDiv.textContent = validation.message;
+  validationDiv.className = 'text-xs mt-1 ' + (validation.level === 'warning' ? 'text-yellow-600' : 'text-green-600');
+  expenseValidations.miscellaneous = validation;
+  updateValidationSummary();
+  validateAndCalculate();
+}
+
+function validateTotalCost() {
+  var claimed = parseFloat(document.querySelector('[name="totalCost"]').value) || 0;
+  var calculated = parseFloat(document.querySelector('[name="calculatedTotal"]').value) || 0;
+  var diff = Math.abs(claimed - calculated);
+  var variancePercent = calculated === 0 ? 0 : (diff / calculated);
+  var validationDiv = document.getElementById('totalCostValidation');
+  if (variancePercent > CONFIG.EXPENSE_LIMITS.TOTAL_VARIANCE_THRESHOLD) {
+    validationDiv.innerHTML = '<span class="text-red-600">❌ Claimed total differs from calculated total by ' + (variancePercent * 100).toFixed(1) + '%</span>';
+    expenseValidations.totalCost = { isValid: false, level: 'error', message: '❌ Total cost variance too high' };
+  } else {
+    validationDiv.innerHTML = '<span class="text-green-600">✅ Claimed total is within acceptable variance</span>';
+    expenseValidations.totalCost = { isValid: true, level: 'success', message: '✅ Claimed total within variance' };
+  }
+  updateValidationSummary();
+}
+
+function validateAndCalculate() {
+  var meals = parseFloat(document.querySelector('[name="mealsCost"]').value) || 0;
+  var lodging = parseFloat(document.querySelector('[name="lodgingCost"]').value) || 0;
+  var perDiem = parseFloat(document.querySelector('[name="perDiemTotal"]').value) || 0;
+  var airfare = parseFloat(document.querySelector('[name="airfare"]').value) || 0;
+  var car = parseFloat(document.querySelector('[name="carRental"]').value) || 0;
+  var ground = parseFloat(document.querySelector('[name="transportation"]').value) || 0;
+  var parking = parseFloat(document.querySelector('[name="parking"]').value) || 0;
+  var conf = parseFloat(document.querySelector('[name="conferenceFee"]').value) || 0;
+  var misc = parseFloat(document.querySelector('[name="miscellaneous"]').value) || 0;
+  var other = misc + conf;
+  var total = perDiem + airfare + car + ground + parking + conf + misc;
+  document.querySelector('[name="otherExpensesTotal"]').value = other.toFixed(2);
+  document.querySelector('[name="calculatedTotal"]').value = total.toFixed(2);
+  validateTotalCost();
+}
+
+function autoCalculateTotal() {
+  var calc = parseFloat(document.querySelector('[name="calculatedTotal"]').value) || 0;
+  var totalInput = document.querySelector('[name="totalCost"]');
+  if (totalInput) {
+    totalInput.value = calc.toFixed(2);
+    validateTotalCost();
+  }
+}
+
+function clearForm() {
+  document.getElementById('tar-form').reset();
+  selectedTaskOrder = null;
+  expenseValidations = {};
+  if (document.getElementById('fundingInfo')) document.getElementById('fundingInfo').classList.add('hidden');
+  if (document.getElementById('file-info')) document.getElementById('file-info').classList.add('hidden');
+  if (document.getElementById('result')) document.getElementById('result').classList.add('hidden');
+  if (document.getElementById('analystReviewSection')) document.getElementById('analystReviewSection').classList.add('hidden');
+  if (document.getElementById('breakdown')) document.getElementById('breakdown').classList.add('hidden');
+  if (document.getElementById('bulk-results')) document.getElementById('bulk-results').classList.add('hidden');
+  updateProgress(0, 'Ready to validate...');
+  updateValidationSummary();
+}
+
+function testGSAConnection() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    updateProgress(20, 'Testing GSA API connectivity...');
+    google.script.run.withSuccessHandler(function(res) {
+      if (res && res.success) {
+        showSuccess('✅ GSA API connectivity confirmed');
+      } else {
+        showError('GSA API test failed: ' + (res && res.message ? res.message : 'Unknown error'));
+      }
+    }).withFailureHandler(function(err) {
+      showError('GSA API test error: ' + (err && err.message ? err.message : 'Unknown error'));
+    }).testGSAAPI();
+  } else {
+    showError('Offline mode: cannot test GSA API');
+  }
+}
+
+function handleSubmit(event) {
+  event.preventDefault();
+  validateAndCalculate();
+  var data = collectFormData();
+  if (!data) {
+    showError('Form data invalid');
+    return;
+  }
+  updateProgress(30, 'Submitting TAR for validation...');
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        showValidationResults(res);
+        updateProgress(0, 'Ready to validate...');
+      })
+      .withFailureHandler(function(err) {
+        showError('Validation error: ' + (err && err.message ? err.message : 'Unknown error'));
+      })
+      .validateTarWithPerDiem(data);
+  } else {
+    showError('Offline mode: validation not available');
+  }
+}
+
+function collectFormData() {
+  try {
+    var form = document.getElementById('tar-form');
+    var formData = new FormData(form);
+    var obj = {};
+    formData.forEach(function(value, key) {
+      obj[key] = value;
+    });
+    // Derive dutyStation from city/state
+    if (obj.city && obj.state) {
+      obj.dutyStation = obj.city + ', ' + obj.state;
+    }
+    obj.duration = parseInt(obj.duration) || 1;
+    obj.totalCost = parseFloat(obj.totalCost) || 0;
+    obj.estimatedCost = parseFloat(obj.estimatedCost) || obj.totalCost;
+    return obj;
+  } catch (err) {
+    return null;
+  }
+}
+
+function showValidationResults(res) {
+  var resultDiv = document.getElementById('result');
+  var resultContent = document.getElementById('result-content');
+  var analystSection = document.getElementById('analystReviewSection');
+  var breakdownDiv = document.getElementById('breakdown');
+  if (!res || !res.success) {
+    resultContent.innerHTML = '<p class="text-red-600">Validation failed: ' + (res && res.errors ? res.errors.join('<br>') : 'Unknown error') + '</p>';
+    resultDiv.classList.remove('hidden');
+    return;
+  }
+  var report = res.validationReport;
+  var html = '<p class="text-gray-700"><strong>Traveler:</strong> ' + report.traveler + '</p>';
+  html += '<p class="text-gray-700"><strong>Claimed Cost:</strong> ' + formatCurrency(parseFloat(report.validation.claimedCost)) + '</p>';
+  html += '<p class="text-gray-700"><strong>Expected Cost:</strong> ' + formatCurrency(report.validation.expectedCosts.totalExpected) + '</p>';
+  html += '<p class="text-gray-700"><strong>Variance:</strong> ' + formatCurrency(report.validation.variance) + ' (' + report.validation.variancePercent + '%)</p>';
+  resultContent.innerHTML = html;
+  resultDiv.classList.remove('hidden');
+  // Show per diem breakdown
+  var brHtml = report.validation.expectedCosts.breakdown
+    .map(function(item) {
+      return '<div class="border p-2 rounded mb-2"><strong>' + item.location + '</strong>: M&IE $' + item.mie + ' + Lodging $' + item.lodging + ' = $' + item.total + '</div>';
+    })
+    .join('');
+  document.getElementById('breakdown-content').innerHTML = brHtml;
+  breakdownDiv.classList.remove('hidden');
+  // Display analyst review section
+  analystSection.classList.remove('hidden');
+  // Populate analyst summary
+  document.getElementById('validationStatusDisplay').textContent = res.message || '';
+  var analysisHtml = '';
+  if (report.recommendations && report.recommendations.length) {
+    analysisHtml = report.recommendations
+      .map(function(rec) {
+        return '<div class="validation-alert validation-error">' + rec + '</div>';
+      })
+      .join('');
+  } else {
+    analysisHtml = '<div class="validation-alert validation-success">No issues found</div>';
+  }
+  document.getElementById('expenseAnalysisDisplay').innerHTML = analysisHtml;
+  document.getElementById('riskAssessmentDisplay').innerHTML = '<p class="text-gray-700">Variance Percent: ' + report.validation.variancePercent + '%</p>';
+}
+
+function updateValidationSummary() {
+  var summaryDiv = document.getElementById('expenseValidationSummary');
+  var content = document.getElementById('validationSummaryContent');
+  var messages = [];
+  for (var key in expenseValidations) {
+    if (expenseValidations.hasOwnProperty(key)) {
+      var val = expenseValidations[key];
+      if (val && val.message) messages.push({ level: val.level, message: val.message });
+    }
+  }
+  if (messages.length === 0) {
+    summaryDiv.classList.add('hidden');
+    return;
+  }
+  var html = messages
+    .map(function(item) {
+      var cls = item.level === 'error' ? 'validation-error' : item.level === 'warning' ? 'validation-warning' : 'validation-success';
+      return '<div class="validation-alert ' + cls + '">' + item.message + '</div>';
+    })
+    .join('');
+  content.innerHTML = html;
+  summaryDiv.classList.remove('hidden');
+}
+
+function analystApprove() {
+  showSuccess('Trip approved for management review');
+}
+function analystReject() {
+  showError('Trip rejected - needs revision');
+}
+function requestMoreInfo() {
+  showWarning('Additional information requested from traveler');
+}
+
+function closeManagementModal() {
+  var modal = document.getElementById('managementModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function downloadPDF() {
+  showSuccess('PDF download started');
+}
+function emailToManagement() {
+  showSuccess('Email sent to management');
+}
+
+// Add a single row to the bulk results panel
+function addBulkResultRow(tarId, result) {
+  var container = document.getElementById('bulk-results-content');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.className = 'p-3 border border-gray-200 rounded';
+  var status = result && result.success ? '✅' : '❌';
+  var message = '';
+  if (result && result.validationReport) {
+    message = result.message || 'Validation completed';
+  } else if (result && result.errors) {
+    message = result.errors.join('<br>');
+  } else if (result && result.warnings) {
+    message = result.warnings.join('<br>');
+  }
+  div.innerHTML = '<strong>TAR ID: ' + tarId + ' ' + status + '</strong><div>' + message + '</div>';
+  container.appendChild(div);
+}
+
+// Validate the selected file for type/size and display info
+function validateAndDisplayFile(file) {
+  var maxSize = 10 * 1024 * 1024; // 10MB
+  var allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (file.size > maxSize) {
+    showError('File size exceeds 10MB limit');
+    return;
+  }
+  if (allowedTypes.indexOf(file.type) === -1) {
+    showError('Only PDF and Word documents are supported');
+    return;
+  }
+  currentFile = file;
+  var fileInfo = document.getElementById('file-info');
+  var fileNameSpan = document.getElementById('file-name');
+  var fileSizeSpan = document.getElementById('file-size');
+  if (fileInfo && fileNameSpan && fileSizeSpan) {
+    fileNameSpan.textContent = file.name;
+    fileSizeSpan.textContent = '(' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+    fileInfo.classList.remove('hidden');
+  }
+}
+
+// Remove the selected file from the UI
+function removeSelectedFile() {
+  currentFile = null;
+  var fileInput = document.getElementById('tarFile');
+  if (fileInput) {
+    fileInput.value = '';
+  }
+  var fileInfo = document.getElementById('file-info');
+  if (fileInfo) {
+    fileInfo.classList.add('hidden');
+  }
+}
+
+// Expense validation summary update
+function updateValidationSummary() {
+  var summaryDiv = document.getElementById('expenseValidationSummary');
+  var content = document.getElementById('validationSummaryContent');
+  var messages = [];
+  for (var key in expenseValidations) {
+    if (expenseValidations.hasOwnProperty(key)) {
+      var val = expenseValidations[key];
+      if (val && val.message) messages.push({ level: val.level, message: val.message });
+    }
+  }
+  if (messages.length === 0) {
+    summaryDiv.classList.add('hidden');
+    return;
+  }
+  var html = messages
+    .map(function(item) {
+      var cls = item.level === 'error' ? 'validation-error' : item.level === 'warning' ? 'validation-warning' : 'validation-success';
+      return '<div class="validation-alert ' + cls + '">' + item.message + '</div>';
+    })
+    .join('');
+  content.innerHTML = html;
+  summaryDiv.classList.remove('hidden');
+}
+
+// Format currency using the browser's locale.  In Apps Script this
+// helper would not be used because the server formats numbers.  For
+// client-side display we rely on Intl.NumberFormat if available.
+function formatCurrency(amount) {
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  } catch (err) {
+    return '$' + amount.toFixed(2);
+  }
+}
+
+// Expose functions globally so inline HTML attributes can find them
+if (typeof window !== 'undefined') {
+  window.handleSubmit = handleSubmit;
+  window.handleFileSelect = handleFileSelect;
+  window.extractDataFromPdf = extractDataFromPdf;
+  window.removeSelectedFile = removeSelectedFile;
+  window.calculateDuration = calculateDuration;
+  window.fetchPerDiemRates = fetchPerDiemRates;
+  window.autoCalculateTotal = autoCalculateTotal;
+  window.clearForm = clearForm;
+  window.testGSAConnection = testGSAConnection;
+  window.validateCarRental = validateCarRental;
+  window.validateParking = validateParking;
+  window.validateConferenceFee = validateConferenceFee;
+  window.validateMiscellaneous = validateMiscellaneous;
+  window.validateTotalCost = validateTotalCost;
+  window.analystApprove = analystApprove;
+  window.analystReject = analystReject;
+  window.requestMoreInfo = requestMoreInfo;
+  window.closeManagementModal = closeManagementModal;
+  window.downloadPDF = downloadPDF;
+  window.emailToManagement = emailToManagement;
+  window.handleBulkFileSelect = handleBulkFileSelect;
+  window.processBulkCsv = processBulkCsv;
+}
+</script>
