@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>TAR/RIP/Invoice Validation System</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Document Validation System</h1>
+        <p>Upload TAR, RIP, or Invoice documents for automated validation</p>
+      </div>
+
+      <form id="uploadForm">
+        <div class="upload-section">
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Click to select file or drag and drop</div>
+            <div class="upload-subtext">
+              Supported formats: PDF, DOC, DOCX, TXT (Max 50MB)
+            </div>
+            <input
+              type="file"
+              id="fileInput"
+              class="file-input"
+              accept=".pdf,.doc,.docx,.txt"
+            />
+          </div>
+
+          <div class="file-info" id="fileInfo">
+            <div class="file-details">
+              <span class="file-name" id="fileName"></span>
+              <span class="file-size" id="fileSize"></span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="documentType"
+            >Document Type (optional - auto-detected if not specified)</label
+          >
+          <select id="documentType" name="documentType">
+            <option value="">Auto-detect document type</option>
+            <option value="TAR">Travel Authorization Report (TAR)</option>
+            <option value="RIP">Request for Initial Purchase (RIP)</option>
+            <option value="INVOICE">Invoice</option>
+          </select>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn" disabled>
+          Upload and Validate Document
+        </button>
+      </form>
+
+      <div class="loading-spinner" id="loadingSpinner"></div>
+
+      <div class="status-message" id="statusMessage"></div>
+
+      <div class="validation-results" id="validationResults">
+        <h3>Validation Results</h3>
+        <div class="score-grid" id="scoreGrid"></div>
+        <div class="issues-list" id="issuesList"></div>
+      </div>
+
+      <div class="nav-links">
+        <a href="?page=dashboard">View Validation Dashboard</a>
+      </div>
+    </div>
+
+    <script>
+      const uploadArea = document.getElementById("uploadArea");
+      const fileInput = document.getElementById("fileInput");
+      const fileInfo = document.getElementById("fileInfo");
+      const fileName = document.getElementById("fileName");
+      const fileSize = document.getElementById("fileSize");
+      const submitBtn = document.getElementById("submitBtn");
+      const uploadForm = document.getElementById("uploadForm");
+      const statusMessage = document.getElementById("statusMessage");
+      const loadingSpinner = document.getElementById("loadingSpinner");
+      const validationResults = document.getElementById("validationResults");
+      const progressFill = document.getElementById("progressFill");
+
+      let selectedFile = null;
+
+      // Upload area click handler
+      uploadArea.addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      // Drag and drop handlers
+      uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.classList.add("dragover");
+      });
+
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.classList.remove("dragover");
+      });
+
+      uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove("dragover");
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleFileSelection(files[0]);
+        }
+      });
+
+      // File input change handler
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          handleFileSelection(e.target.files[0]);
+        }
+      });
+
+      // Handle file selection
+      function handleFileSelection(file) {
+        selectedFile = file;
+
+        // Validate file type
+        const allowedTypes = [".pdf", ".doc", ".docx", ".txt"];
+        const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+
+        if (!allowedTypes.includes(fileExtension)) {
+          showStatus(
+            "error",
+            "Invalid file type. Please select a PDF, DOC, DOCX, or TXT file."
+          );
+          return;
+        }
+
+        // Validate file size (50MB limit)
+        const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+        if (file.size > maxSize) {
+          showStatus(
+            "error",
+            "File size exceeds 50MB limit. Please select a smaller file."
+          );
+          return;
+        }
+
+        // Display file info
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.classList.add("show");
+
+        // Enable submit button
+        submitBtn.disabled = false;
+
+        // Simulate upload progress
+        animateProgress();
+
+        hideStatus();
+      }
+
+      // Format file size
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      }
+
+      // Animate progress bar
+      function animateProgress() {
+        progressFill.style.width = "100%";
+      }
+
+      // Show status message
+      function showStatus(type, message) {
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.textContent = message;
+        statusMessage.style.display = "block";
+      }
+
+      // Hide status message
+      function hideStatus() {
+        statusMessage.style.display = "none";
+      }
+
+      // Form submission handler
+      uploadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (!selectedFile) {
+          showStatus("error", "Please select a file to upload.");
+          return;
+        }
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Processing...";
+        loadingSpinner.style.display = "block";
+        hideStatus();
+        validationResults.classList.remove("show");
+
+        try {
+          // Simulate file processing
+          await simulateValidation();
+
+          // Show success message
+          showStatus("success", "Document validation completed successfully!");
+
+          // Display validation results
+          displayValidationResults();
+        } catch (error) {
+          showStatus(
+            "error",
+            "An error occurred during validation. Please try again."
+          );
+          console.error("Validation error:", error);
+        } finally {
+          // Reset form state
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Upload and Validate Document";
+          loadingSpinner.style.display = "none";
+        }
+      });
+
+      // Simulate validation process
+      async function simulateValidation() {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve();
+          }, 3000); // 3 second delay to simulate processing
+        });
+      }
+
+      // Display validation results
+      function displayValidationResults() {
+        const documentType =
+          document.getElementById("documentType").value || "Auto-detected";
+
+        // Generate mock validation scores
+        const scores = generateMockScores(selectedFile.name);
+
+        // Clear previous results
+        const scoreGrid = document.getElementById("scoreGrid");
+        const issuesList = document.getElementById("issuesList");
+        scoreGrid.innerHTML = "";
+        issuesList.innerHTML = "";
+
+        // Display scores
+        scores.forEach((score) => {
+          const scoreItem = document.createElement("div");
+          scoreItem.className = "score-item";
+          scoreItem.innerHTML = `
+                    <div class="score-value" style="color: ${getScoreColor(
+                      score.value
+                    )}">${score.value}%</div>
+                    <div class="score-label">${score.label}</div>
+                `;
+          scoreGrid.appendChild(scoreItem);
+        });
+
+        // Display issues if any
+        const issues = generateMockIssues();
+        if (issues.length > 0) {
+          const issuesTitle = document.createElement("h4");
+          issuesTitle.textContent = "Issues Found:";
+          issuesTitle.style.marginBottom = "10px";
+          issuesList.appendChild(issuesTitle);
+
+          issues.forEach((issue) => {
+            const issueItem = document.createElement("div");
+            issueItem.className = "issue-item";
+            issueItem.textContent = issue;
+            issuesList.appendChild(issueItem);
+          });
+        } else {
+          const noIssues = document.createElement("div");
+          noIssues.style.color = "#155724";
+          noIssues.style.fontWeight = "500";
+          noIssues.textContent =
+            "✅ No issues found - document passes all validation checks";
+          issuesList.appendChild(noIssues);
+        }
+
+        // Show results
+        validationResults.classList.add("show");
+      }
+
+      // Generate mock validation scores
+      function generateMockScores(filename) {
+        const baseScore = 75 + Math.random() * 20; // 75-95% base score
+
+        return [
+          {
+            label: "Overall Score",
+            value: Math.round(baseScore),
+          },
+          {
+            label: "Format Compliance",
+            value: Math.round(baseScore + Math.random() * 10 - 5),
+          },
+          {
+            label: "Content Quality",
+            value: Math.round(baseScore + Math.random() * 10 - 5),
+          },
+          {
+            label: "Completeness",
+            value: Math.round(baseScore + Math.random() * 15 - 7),
+          },
+        ];
+      }
+
+      // Generate mock issues
+      function generateMockIssues() {
+        const possibleIssues = [
+          "Missing required section: Executive Summary",
+          "Date format inconsistency detected",
+          "Some numerical values need verification",
+          "Document structure could be improved",
+          "Minor formatting issues in appendix",
+        ];
+
+        // Randomly return 0-2 issues
+        const numIssues = Math.floor(Math.random() * 3);
+        const issues = [];
+
+        for (let i = 0; i < numIssues; i++) {
+          const randomIssue =
+            possibleIssues[Math.floor(Math.random() * possibleIssues.length)];
+          if (!issues.includes(randomIssue)) {
+            issues.push(randomIssue);
+          }
+        }
+
+        return issues;
+      }
+
+      // Get color based on score
+      function getScoreColor(score) {
+        if (score >= 90) return "#28a745";
+        if (score >= 80) return "#ffc107";
+        if (score >= 70) return "#fd7e14";
+        return "#dc3545";
+      }
+
+      // Initialize the application
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log("Document Validation System initialized");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style2.css" />
+    <title>TAR/RIP/Invoice Validation System - Google Sheets Structure</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📊 TAR/RIP/Invoice Validation System - Prototype</h1>
+        <p>Complete Google Sheets Database Structure</p>
+      </div>
+
+      <div class="content">
+        <div class="setup-instructions">
+          <h3>🚀 Setup Instructions</h3>
+          <ol class="setup-steps">
+            <li>Create a new Google Spreadsheet</li>
+            <li>Create the following sheets (tabs) in your spreadsheet</li>
+            <li>Copy the column headers for each sheet as shown below</li>
+            <li>Set up data validation rules where specified</li>
+            <li>Run the setupSystem() function from your Apps Script</li>
+            <li>Configure the script properties with your specific values</li>
+          </ol>
+        </div>
+
+        <!-- Document Tracking Sheet -->
+        <div class="sheet-section">
+          <div class="sheet-header">
+            <span class="icon">📋</span>
+            Sheet 1: Document_Tracking (Main tracking database)
+          </div>
+          <div class="sheet-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Column</th>
+                    <th>Header</th>
+                    <th>Data Type</th>
+                    <th>Sample Data</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>A</td>
+                    <td><strong>Tracking ID</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">TRK2024061100001</td>
+                    <td>Unique identifier for each document</td>
+                  </tr>
+                  <tr>
+                    <td>B</td>
+                    <td><strong>File Name</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">TAR_Q2_2024_Final.pdf</td>
+                    <td>Original uploaded filename</td>
+                  </tr>
+                  <tr>
+                    <td>C</td>
+                    <td><strong>File ID</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+                    </td>
+                    <td>Google Drive file ID</td>
+                  </tr>
+                  <tr>
+                    <td>D</td>
+                    <td><strong>Document Type</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">TAR</td>
+                    <td>TAR, RIP, INVOICE, or UNKNOWN</td>
+                  </tr>
+                  <tr>
+                    <td>E</td>
+                    <td><strong>Upload Date</strong></td>
+                    <td><span class="data-type date">Date</span></td>
+                    <td class="sample-data">2024-06-11 14:30:25</td>
+                    <td>When document was uploaded</td>
+                  </tr>
+                  <tr>
+                    <td>F</td>
+                    <td><strong>Uploaded By</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">user@company.com</td>
+                    <td>Email of person who uploaded</td>
+                  </tr>
+                  <tr>
+                    <td>G</td>
+                    <td><strong>Status</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">REVIEW_REQUIRED</td>
+                    <td>AUTO_APPROVED, REVIEW_REQUIRED, MANUAL_REVIEW</td>
+                  </tr>
+                  <tr>
+                    <td>H</td>
+                    <td><strong>Risk Score</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">78</td>
+                    <td>Overall risk score (0-100)</td>
+                  </tr>
+                  <tr>
+                    <td>I</td>
+                    <td><strong>Completeness Score</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">85</td>
+                    <td>Document completeness (0-100)</td>
+                  </tr>
+                  <tr>
+                    <td>J</td>
+                    <td><strong>Compliance Score</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">72</td>
+                    <td>Compliance check score (0-100)</td>
+                  </tr>
+                  <tr>
+                    <td>K</td>
+                    <td><strong>Format Score</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">90</td>
+                    <td>Format validation score (0-100)</td>
+                  </tr>
+                  <tr>
+                    <td>L</td>
+                    <td><strong>Issues Count</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">3</td>
+                    <td>Number of issues found</td>
+                  </tr>
+                  <tr>
+                    <td>M</td>
+                    <td><strong>Issues List</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      Missing risk assessment; Contract reference unclear
+                    </td>
+                    <td>Semicolon-separated list of issues</td>
+                  </tr>
+                  <tr>
+                    <td>N</td>
+                    <td><strong>Validation Details</strong></td>
+                    <td><span class="data-type json">JSON</span></td>
+                    <td class="sample-data">
+                      {"Contract Information":true,"Risk Assessment":false}
+                    </td>
+                    <td>JSON object with detailed validation results</td>
+                  </tr>
+                  <tr>
+                    <td>O</td>
+                    <td><strong>Reviewer</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">reviewer@company.com</td>
+                    <td>Assigned reviewer email</td>
+                  </tr>
+                  <tr>
+                    <td>P</td>
+                    <td><strong>Review Date</strong></td>
+                    <td><span class="data-type date">Date</span></td>
+                    <td class="sample-data">2024-06-12 09:15:00</td>
+                    <td>When review was completed</td>
+                  </tr>
+                  <tr>
+                    <td>Q</td>
+                    <td><strong>Review Comments</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      Approved with minor corrections needed
+                    </td>
+                    <td>Reviewer's comments</td>
+                  </tr>
+                  <tr>
+                    <td>R</td>
+                    <td><strong>Final Status</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">APPROVED</td>
+                    <td>APPROVED, REJECTED, PENDING</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="description">
+              <strong>Purpose:</strong> Main tracking database for all uploaded
+              documents. Each row represents one uploaded document with its
+              validation results and review status.
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Log Sheet -->
+        <div class="sheet-section">
+          <div class="sheet-header">
+            <span class="icon">⚡</span>
+            Sheet 2: Performance_Log (System performance tracking)
+          </div>
+          <div class="sheet-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Column</th>
+                    <th>Header</th>
+                    <th>Data Type</th>
+                    <th>Sample Data</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>A</td>
+                    <td><strong>Timestamp</strong></td>
+                    <td><span class="data-type date">DateTime</span></td>
+                    <td class="sample-data">2024-06-11 14:32:18</td>
+                    <td>When the operation occurred</td>
+                  </tr>
+                  <tr>
+                    <td>B</td>
+                    <td><strong>Operation</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">processUpload</td>
+                    <td>Name of the operation being tracked</td>
+                  </tr>
+                  <tr>
+                    <td>C</td>
+                    <td><strong>Duration (ms)</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">2850</td>
+                    <td>How long the operation took in milliseconds</td>
+                  </tr>
+                  <tr>
+                    <td>D</td>
+                    <td><strong>Metadata</strong></td>
+                    <td><span class="data-type json">JSON</span></td>
+                    <td class="sample-data">
+                      {"fileSize":"2.3MB","documentType":"TAR"}
+                    </td>
+                    <td>Additional context about the operation</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="description">
+              <strong>Purpose:</strong> Track system performance metrics to
+              identify bottlenecks and monitor system health over time.
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Sheet -->
+        <div class="sheet-section">
+          <div class="sheet-header">
+            <span class="icon">⚙️</span>
+            Sheet 3: System_Configuration (System settings and thresholds)
+          </div>
+          <div class="sheet-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Column</th>
+                    <th>Header</th>
+                    <th>Data Type</th>
+                    <th>Sample Data</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>A</td>
+                    <td><strong>Setting Key</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">AUTO_APPROVAL_THRESHOLD</td>
+                    <td>Configuration setting identifier</td>
+                  </tr>
+                  <tr>
+                    <td>B</td>
+                    <td><strong>Setting Value</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">85</td>
+                    <td>Current value for the setting</td>
+                  </tr>
+                  <tr>
+                    <td>C</td>
+                    <td><strong>Description</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      Minimum score required for automatic approval
+                    </td>
+                    <td>What this setting controls</td>
+                  </tr>
+                  <tr>
+                    <td>D</td>
+                    <td><strong>Data Type</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">NUMBER</td>
+                    <td>Expected data type (TEXT, NUMBER, BOOLEAN)</td>
+                  </tr>
+                  <tr>
+                    <td>E</td>
+                    <td><strong>Last Modified</strong></td>
+                    <td><span class="data-type date">DateTime</span></td>
+                    <td class="sample-data">2024-06-11 10:00:00</td>
+                    <td>When this setting was last changed</td>
+                  </tr>
+                  <tr>
+                    <td>F</td>
+                    <td><strong>Modified By</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">admin@company.com</td>
+                    <td>Who made the last change</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="note">
+              <strong
+                >Pre-populate this sheet with these default settings:</strong
+              >
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Setting Key</th>
+                    <th>Setting Value</th>
+                    <th>Description</th>
+                    <th>Data Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>AUTO_APPROVAL_THRESHOLD</td>
+                    <td>85</td>
+                    <td>Minimum score for automatic approval</td>
+                    <td>NUMBER</td>
+                  </tr>
+                  <tr>
+                    <td>REVIEW_THRESHOLD</td>
+                    <td>70</td>
+                    <td>Minimum score before manual review required</td>
+                    <td>NUMBER</td>
+                  </tr>
+                  <tr>
+                    <td>MAX_FILE_SIZE_MB</td>
+                    <td>50</td>
+                    <td>Maximum file size allowed in MB</td>
+                    <td>NUMBER</td>
+                  </tr>
+                  <tr>
+                    <td>ALLOWED_FILE_TYPES</td>
+                    <td>pdf,doc,docx,txt</td>
+                    <td>Comma-separated list of allowed file extensions</td>
+                    <td>TEXT</td>
+                  </tr>
+                  <tr>
+                    <td>NOTIFICATION_ENABLED</td>
+                    <td>true</td>
+                    <td>Whether to send email notifications</td>
+                    <td>BOOLEAN</td>
+                  </tr>
+                  <tr>
+                    <td>DATA_RETENTION_DAYS</td>
+                    <td>90</td>
+                    <td>Days to keep old data before cleanup</td>
+                    <td>NUMBER</td>
+                  </tr>
+                  <tr>
+                    <td>SUPERVISOR_EMAIL</td>
+                    <td>supervisor@company.com</td>
+                    <td>Email for high-risk notifications</td>
+                    <td>TEXT</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="description">
+              <strong>Purpose:</strong> Centralized configuration management.
+              Modify values here to change system behavior without touching
+              code.
+            </div>
+          </div>
+        </div>
+
+        <!-- Document Templates Sheet -->
+        <div class="sheet-section">
+          <div class="sheet-header">
+            <span class="icon">📄</span>
+            Sheet 4: Document_Templates (Validation rules and templates)
+          </div>
+          <div class="sheet-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Column</th>
+                    <th>Header</th>
+                    <th>Data Type</th>
+                    <th>Sample Data</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>A</td>
+                    <td><strong>Document Type</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">TAR</td>
+                    <td>TAR, RIP, or INVOICE</td>
+                  </tr>
+                  <tr>
+                    <td>B</td>
+                    <td><strong>Required Section</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">Contract Information</td>
+                    <td>Name of required section</td>
+                  </tr>
+                  <tr>
+                    <td>C</td>
+                    <td><strong>Keywords</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      contract number,contract,agreement
+                    </td>
+                    <td>Comma-separated keywords to look for</td>
+                  </tr>
+                  <tr>
+                    <td>D</td>
+                    <td><strong>Weight</strong></td>
+                    <td><span class="data-type number">Number</span></td>
+                    <td class="sample-data">20</td>
+                    <td>Importance weight (higher = more important)</td>
+                  </tr>
+                  <tr>
+                    <td>E</td>
+                    <td><strong>Is Required</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">TRUE</td>
+                    <td>TRUE if section is mandatory</td>
+                  </tr>
+                  <tr>
+                    <td>F</td>
+                    <td><strong>Validation Rule</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">KEYWORD_MATCH</td>
+                    <td>Type of validation to perform</td>
+                  </tr>
+                  <tr>
+                    <td>G</td>
+                    <td><strong>Error Message</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      Missing required section: Contract Information
+                    </td>
+                    <td>Message to show when validation fails</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="note">
+              <strong
+                >Pre-populate with validation rules for each document type (TAR,
+                RIP, INVOICE)</strong
+              >
+            </div>
+
+            <div class="description">
+              <strong>Purpose:</strong> Define what sections and content are
+              required for each document type. This makes the validation rules
+              configurable without code changes.
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Log Sheet -->
+        <div class="sheet-section">
+          <div class="sheet-header">
+            <span class="icon">📝</span>
+            Sheet 5: Audit_Log (System activity tracking)
+          </div>
+          <div class="sheet-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Column</th>
+                    <th>Header</th>
+                    <th>Data Type</th>
+                    <th>Sample Data</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>A</td>
+                    <td><strong>Timestamp</strong></td>
+                    <td><span class="data-type date">DateTime</span></td>
+                    <td class="sample-data">2024-06-11 14:35:12</td>
+                    <td>When the action occurred</td>
+                  </tr>
+                  <tr>
+                    <td>B</td>
+                    <td><strong>User Email</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">user@company.com</td>
+                    <td>Who performed the action</td>
+                  </tr>
+                  <tr>
+                    <td>C</td>
+                    <td><strong>Action</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">DOCUMENT_UPLOAD</td>
+                    <td>Type of action performed</td>
+                  </tr>
+                  <tr>
+                    <td>D</td>
+                    <td><strong>Tracking ID</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">TRK2024061100001</td>
+                    <td>Related document tracking ID</td>
+                  </tr>
+                  <tr>
+                    <td>E</td>
+                    <td><strong>Details</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">
+                      Uploaded TAR document: TAR_Q2_2024_Final.pdf
+                    </td>
+                    <td>Additional details about the action</td>
+                  </tr>
+                  <!-- <tr>
+                                    <td>F</td>
+                                    <td><strong>IP Address</strong></td>
+                                    <td><span class="data-type text">Text</span></td>
+                                    <td class="sample-data">192.168.1.100</td>
+                                    <td>User's IP address (if available)</td>
+                                </tr> -->
+                  <tr>
+                    <td>G</td>
+                    <td><strong>Status</strong></td>
+                    <td><span class="data-type text">Text</span></td>
+                    <td class="sample-data">SUCCESS</td>
+                    <td>SUCCESS, FAILURE, WARNING</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="description">
+              <strong>Purpose:</strong> Track all user activities for auditing
+              and security purposes. Each action is recorded with context
+              including timestamp, user, type of action, and result status. This
+              ensures transparency and helps identify misuse or operational
+              anomalies.
+            </div>
+          </div>
+        </div>
+
+        <div class="final-notes">
+          <h3>📌 Final Notes</h3>
+          <p>
+            Ensure your Google Apps Script is authorized properly and your
+            Google Sheet follows the exact structure outlined above. Regularly
+            back up your data and audit logs. For best performance, monitor the
+            <em>Performance_Log</em> and tweak configuration settings as needed.
+            This system is designed to evolve—feel free to extend it with new
+            document types, validation rules, or automated workflows.
+          </p>
+        </div>
+
+        <div class="apps-script-section">
+          <h3>🛠 Apps Script Integration</h3>
+          <p>
+            Connect this structure with your backend logic using Google Apps
+            Script. Use functions like
+            <code>setupSystem()</code> to initialize the sheets,
+            <code>validateDocument()</code> to trigger validation, and
+            <code>logAuditEntry()</code> to record system actions. Ensure all
+            API calls and file access permissions are granted to the script for
+            seamless automation.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
