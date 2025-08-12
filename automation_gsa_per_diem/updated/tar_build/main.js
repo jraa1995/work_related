@@ -7,14 +7,14 @@
 // configuration explicitly so that dependent functions have access to
 // settings like API keys and validation rules. This code will be ignored
 // in the Apps Script runtime where `module` is undefined.
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
   // eslint-disable-next-line global-require
-  var CONFIG = require("./config.js");
+  var CONFIG = require('./config.js');
 
   // Import utility functions when running under Node. In the Apps Script
   // environment these functions are available globally and require() is
   // undefined. We destructure only the functions used within this file.
-  const utils = require("./utils.js");
+  const utils = require('./utils.js');
   var average = utils.average;
   var fetchPerDiemByCityState = utils.fetchPerDiemByCityState;
   var validateFormData = utils.validateFormData;
@@ -27,7 +27,7 @@ if (typeof module !== "undefined" && module.exports) {
 
 // Define a fallback Logger for Node.js. In Apps Script the global Logger
 // object will already exist, so this definition will be ignored.
-if (typeof Logger === "undefined") {
+if (typeof Logger === 'undefined') {
   var Logger = {
     log: function () {},
     warn: function () {},
@@ -101,7 +101,7 @@ function validateTarWithPerDiem(data) {
       mergedData.contactNumber = mergedData.poc;
     }
     // Use totalCost as estimatedCost fallback
-    if (!mergedData.estimatedCost && typeof mergedData.totalCost === "number") {
+    if (!mergedData.estimatedCost && typeof mergedData.totalCost === 'number') {
       mergedData.estimatedCost = mergedData.totalCost;
     }
 
@@ -127,10 +127,10 @@ function validateTarWithPerDiem(data) {
     // empty and dutyStation contains a comma.
     if (
       (!mergedData.city || !mergedData.state) &&
-      typeof mergedData.dutyStation === "string" &&
-      mergedData.dutyStation.includes(",")
+      typeof mergedData.dutyStation === 'string' &&
+      mergedData.dutyStation.includes(',')
     ) {
-      const parts = mergedData.dutyStation.split(",");
+      const parts = mergedData.dutyStation.split(',');
       if (parts.length >= 2) {
         const cityPart = parts[0].trim();
         const statePart = parts[1].trim().substring(0, 2).toUpperCase();
@@ -456,7 +456,7 @@ function clearValidationLogs() {
 // running in Google Apps Script these exports will be ignored as `module`
 // is undefined. Unit tests can import these to validate logic without the
 // Apps Script runtime.
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     doGet,
     include,

@@ -6,7 +6,7 @@
 // Provide a stub Logger in environments where the Google Apps Script Logger
 // service is unavailable (e.g. Node.js during unit testing). If Logger is
 // already defined, this block has no effect.
-if (typeof Logger === "undefined") {
+if (typeof Logger === 'undefined') {
   var Logger = {
     log: function () {},
     warn: function () {},
@@ -17,8 +17,8 @@ if (typeof Logger === "undefined") {
 // Import utility functions when running under Node.js. In Apps Script
 // environment `require` is undefined and this block is ignored. We
 // destructure only the functions used within this file.
-if (typeof module !== "undefined" && module.exports) {
-  const utils = require("./utils.js");
+if (typeof module !== 'undefined' && module.exports) {
+  const utils = require('./utils.js');
   // Use the PDF extraction helper from utils when running under Node. The
   // `extractTextFromWord` and other functions are defined in this file
   // below and do not need to be imported.
@@ -732,7 +732,7 @@ function extractGSAFormData(text) {
 // Export processor functions for Node.js testing. These exports are ignored
 // in the Google Apps Script environment. Only functions that do not depend
 // heavily on Apps Script services should be used in local testing.
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     processDocument,
     extractTextFromPDF,
