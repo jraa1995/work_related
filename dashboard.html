@@ -890,7 +890,7 @@
                         </span>
                     </div>
                     <div class="employee-table-container">
-                        <table class="employee-table">
+                        <table id="employee-table-${unitCode}" class="employee-table">
                             <thead>
                                 <tr>
                                     <th>Employee</th>
@@ -935,6 +935,12 @@
                                 ${isOverallComplete ? 'Complete' : 'Incomplete'}
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Supervisor search and suggestions -->
+                    <div class="supervisor-filter">
+                        <input type="text" id="supervisor-search-${unitCode}" class="supervisor-search-input" placeholder="Search supervisor...">
+                        <div id="supervisor-suggestions-${unitCode}" class="supervisor-suggestions"></div>
                     </div>
                     
                     <div class="business-unit-metrics">
@@ -987,6 +993,16 @@
                 });
                 
                 container.innerHTML = detailHTML;
+
+                // After rendering the business unit cards, set up supervisor filtering for each unit.
+                Object.keys(businessUnitStats).forEach(unit => {
+                    const stats = businessUnitStats[unit] || { employees: [] };
+                    // Call setup only if the card is rendered
+                    if (stats && stats.employees && stats.employees.length >= 0) {
+                        setupSupervisorFilter(unit, stats.employees);
+                    }
+                });
+
                 loading.style.display = 'none';
                 container.style.display = 'block';
             }, 500);
@@ -1001,6 +1017,170 @@
             const stats = businessUnitStats[unitCode] || { total: 0, completed: 0, incomplete: 0, employees: [] };
             
             container.innerHTML = createBusinessUnitDetailCard(unitCode, stats);
+
+            // Set up supervisor filter for this individual business unit
+            setupSupervisorFilter(unitCode, stats.employees);
+        }
+
+        // -----------------------------------------------------------------------------
+        // Supervisor filter utilities and setup
+        // These functions enable searching and filtering by supervisor on each business unit page.
+
+        /**
+         * Parse supervisor email into first and last name and return an object.
+         * Handles emails in the form firstname.lastname@domain.com or similar.
+         * Splits on dots, underscores, or hyphens to be resilient to naming variations.
+         *
+         * @param {string} email - Supervisor email address
+         * @returns {{firstName: string, lastName: string, email: string}}
+         */
+        function parseSupervisorEmail(email) {
+            if (!email) {
+                return { firstName: '', lastName: '', email: email || '' };
+            }
+            const atIndex = email.indexOf('@');
+            const userPart = atIndex >= 0 ? email.slice(0, atIndex) : email;
+            // Split on dots, underscores or hyphens to handle various formats
+            const nameParts = userPart.split(/[._-]/).filter(Boolean);
+            let firstName = '';
+            let lastName = '';
+            if (nameParts.length >= 2) {
+                firstName = nameParts[0];
+                lastName = nameParts.slice(1).join(' ');
+            } else if (nameParts.length === 1) {
+                firstName = nameParts[0];
+            }
+            const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+            return {
+                firstName: capitalize(firstName),
+                lastName: capitalize(lastName),
+                email: email
+            };
+        }
+
+        /**
+         * Format supervisor email into display string: "FirstName, LastName: email".
+         * Returns a human-friendly label used in the suggestions list.
+         *
+         * @param {string} email
+         * @returns {string}
+         */
+        function formatSupervisorDisplay(email) {
+            const parsed = parseSupervisorEmail(email || '');
+            return `${parsed.firstName}${parsed.lastName ? ', ' + parsed.lastName : ''}: ${parsed.email}`;
+        }
+
+        /**
+         * Filter the employees table by supervisor email.
+         * Shows only rows matching the selected supervisor or all rows if no supervisor is selected.
+         * Updates the "Showing" count in the table info element accordingly.
+         *
+         * @param {string} unitCode - Business unit code
+         * @param {string} selectedEmail - Supervisor email to filter by, or empty string to show all
+         */
+        function filterTableBySupervisor(unitCode, selectedEmail) {
+            const table = document.getElementById(`employee-table-${unitCode}`);
+            if (!table) return;
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            const rows = tbody.getElementsByTagName('tr');
+            let visibleCount = 0;
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                if (!cells || cells.length < 2) continue;
+                const supervisorEmail = (cells[1].textContent || '').trim();
+                if (!selectedEmail || supervisorEmail.toLowerCase() === selectedEmail.toLowerCase()) {
+                    rows[i].style.display = '';
+                    visibleCount++;
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+            // Update table info count text if available
+            const card = document.getElementById(`business-unit-${unitCode}`);
+            if (card) {
+                const tableInfoCount = card.querySelector('.table-info-count');
+                if (tableInfoCount) {
+                    const total = rows.length;
+                    if (selectedEmail) {
+                        tableInfoCount.textContent = `Showing ${visibleCount} of ${total} employees`;
+                    } else {
+                        tableInfoCount.textContent = `Showing all ${total} employees (scroll for more)`;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Set up supervisor search and filter functionality for a specific business unit.
+         * Adds event listeners to the search input, populates suggestions, and filters the table.
+         *
+         * @param {string} unitCode - Business unit code
+         * @param {Array<Object>} employees - Array of employee objects belonging to the unit
+         */
+        function setupSupervisorFilter(unitCode, employees) {
+            const input = document.getElementById(`supervisor-search-${unitCode}`);
+            const suggestionsContainer = document.getElementById(`supervisor-suggestions-${unitCode}`);
+            if (!input || !suggestionsContainer) {
+                return;
+            }
+            // Build list of unique supervisors with parsed names
+            const supervisorMap = {};
+            employees.forEach(emp => {
+                const supEmail = (emp.supervisor || '').trim();
+                if (supEmail && !supervisorMap[supEmail]) {
+                    supervisorMap[supEmail] = parseSupervisorEmail(supEmail);
+                }
+            });
+            const supervisorList = Object.values(supervisorMap);
+
+            // Helper to update suggestions based on the current query
+            function updateSuggestions() {
+                const query = (input.value || '').trim().toLowerCase();
+                suggestionsContainer.innerHTML = '';
+                if (!query) {
+                    suggestionsContainer.style.display = 'none';
+                    // Clear filter and show all employees when query is empty
+                    filterTableBySupervisor(unitCode, '');
+                    return;
+                }
+                // Filter supervisors by first name, last name, or email
+                const matches = supervisorList.filter(item => {
+                    return item.firstName.toLowerCase().includes(query) ||
+                           item.lastName.toLowerCase().includes(query) ||
+                           item.email.toLowerCase().includes(query);
+                }).slice(0, 10); // Limit to 10 suggestions
+                if (matches.length === 0) {
+                    suggestionsContainer.style.display = 'none';
+                    // Show all employees if no match found
+                    filterTableBySupervisor(unitCode, '');
+                    return;
+                }
+                matches.forEach(item => {
+                    const displayText = `${item.firstName}${item.lastName ? ', ' + item.lastName : ''}: ${item.email}`;
+                    const div = document.createElement('div');
+                    div.className = 'supervisor-suggestion-item';
+                    div.textContent = displayText;
+                    div.setAttribute('data-email', item.email);
+                    // Click handler for suggestion item
+                    div.addEventListener('click', () => {
+                        input.value = displayText;
+                        suggestionsContainer.style.display = 'none';
+                        filterTableBySupervisor(unitCode, item.email);
+                    });
+                    suggestionsContainer.appendChild(div);
+                });
+                suggestionsContainer.style.display = 'block';
+            }
+
+            // Listen to input events on the search field
+            input.addEventListener('input', updateSuggestions);
+            // Hide suggestions when clicking outside the search area
+            document.addEventListener('click', function(event) {
+                if (!suggestionsContainer.contains(event.target) && event.target !== input) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
         }
 
 
@@ -1091,12 +1271,13 @@
 
 
 
-        // Auto-refresh every 5 minutes
-        setInterval(() => {
-            if (currentPage === 'overview') {
-                loadDashboardData();
-            }
-        }, 5 * 60 * 1000);
+        // Note: Auto-refresh disabled to prevent unnecessary reloads. Manual refresh via the button is available.
+        // If periodic refresh is desired in the future, re-enable the interval below.
+        // setInterval(() => {
+        //     if (currentPage === 'overview') {
+        //         loadDashboardData();
+        //     }
+        // }, 5 * 60 * 1000);
 
 
 
