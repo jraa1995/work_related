@@ -4,533 +4,533 @@
 
 
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CLP Dashboard</title>
-  <?!= include('style/base') ?>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CLP Dashboard</title>
+        <?!= include('style/base') ?>
+    </head>
 
 
 
 
-<body>
-  <div class="app-layout">
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <button class="sidebar-toggle" id="sidebarToggle">☰</button>
-        <div class="sidebar-logo">CLP Portal</div>
-        <div class="sidebar-subtitle">Training Dashboard</div>
-      </div>
-      <div class="sidebar-nav">
-        <div class="nav-item active" id="nav-overview">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Overview</span>
+    <body>
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <nav class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+                    <div class="sidebar-logo">CLP Portal</div>
+                    <div class="sidebar-subtitle">Training Dashboard</div>
+                </div>
+                <div class="sidebar-nav">
+                    <div class="nav-item active" id="nav-overview">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Overview</span>
+                    </div>
+                    <div class="nav-item" id="nav-business-units">
+                        <span class="nav-icon">🏢</span>
+                        <span class="nav-text">Business Units</span>
+                        <span class="nav-expand">▶</span>
+                    </div>
+                    <div class="nav-submenu" id="business-units-submenu">
+                        <div class="nav-subitem" id="nav-QF2">SOS</div>
+                        <div class="nav-subitem" id="nav-QFA">Army</div>
+                        <div class="nav-subitem" id="nav-QFB">AF/N/SF</div>
+                        <div class="nav-subitem" id="nav-QFC">Civilian</div>
+                        <div class="nav-subitem" id="nav-QFE">Defense</div>
+                    </div>
+                </div>
+            </nav>
+
+
+
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Overview Page -->
+                <div class="page-content active" id="page-overview">
+                    <div class="page-header">
+                        <h1 class="page-title">Overview Dashboard</h1>
+                        <p class="page-subtitle">Business Unit Completion Summary</p>
+                    </div>
+
+
+
+
+                    <div class="container">
+                        <div class="dashboard-content">
+                            <div class="stats-overview" id="statsOverview">
+                                <div class="stat-card">
+                                    <div class="stat-number" id="totalEmployees">0</div>
+                                    <div class="stat-label">Total Employees</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="completedCount">0</div>
+                                    <div class="stat-label">Completed</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="incompleteCount">0</div>
+                                    <div class="stat-label">Incomplete</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="completionRate">0%</div>
+                                    <div class="stat-label">Completion Rate</div>
+                                </div>
+                            </div>
+
+
+
+
+                            <div class="loading" id="loading">
+                                <div class="spinner"></div>
+                                <p>Loading CLP data...</p>
+                            </div>
+
+
+
+
+                            <div class="business-units-grid" id="businessUnitsGrid">
+                                <!-- Business unit cards will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <!-- Business Units Page -->
+                <div class="page-content" id="page-business-units">
+                    <div class="page-header">
+                        <h1 class="page-title">Business Units</h1>
+                        <p class="page-subtitle">Individual Business Unit Analytics</p>
+                    </div>
+
+
+
+
+                    <div class="loading" id="loading-business-units">
+                        <div class="spinner"></div>
+                        <p>Loading business unit details...</p>
+                    </div>
+
+
+
+
+                    <div id="businessUnitsDetailContainer">
+                        <!-- Business unit detail cards will be populated by JavaScript -->
+                    </div>
+                </div>
+
+
+
+
+                <!-- Individual Business Unit Pages -->
+                <div class="page-content" id="page-QF2">
+                    <div class="page-header">
+                        <h1 class="page-title">SOS Business Unit</h1>
+                        <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+                    </div>
+                    <div id="QF2-content"></div>
+                </div>
+
+
+
+
+                <div class="page-content" id="page-QFA">
+                    <div class="page-header">
+                        <h1 class="page-title">Army Business Unit</h1>
+                        <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+                    </div>
+                    <div id="QFA-content"></div>
+                </div>
+
+
+
+
+                <div class="page-content" id="page-QFB">
+                    <div class="page-header">
+                        <h1 class="page-title">AF/N/SF Business Unit</h1>
+                        <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+                    </div>
+                    <div id="QFB-content"></div>
+                </div>
+
+
+
+
+                <div class="page-content" id="page-QFC">
+                    <div class="page-header">
+                        <h1 class="page-title">Civilian Business Unit</h1>
+                        <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+                    </div>
+                    <div id="QFC-content"></div>
+                </div>
+
+
+
+
+
+
+
+
+                <div class="page-content" id="page-QFE">
+                    <div class="page-header">
+                        <h1 class="page-title">Defense Business Unit</h1>
+                        <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+                    </div>
+                    <div id="QFE-content"></div>
+                </div>
+            </main>
         </div>
-        <div class="nav-item" id="nav-business-units">
-          <span class="nav-icon">🏢</span>
-          <span class="nav-text">Business Units</span>
-          <span class="nav-expand">▶</span>
-        </div>
-        <div class="nav-submenu" id="business-units-submenu">
-          <div class="nav-subitem" id="nav-QF2">SOS</div>
-          <div class="nav-subitem" id="nav-QFA">Army</div>
-          <div class="nav-subitem" id="nav-QFB">AF/N/SF</div>
-          <div class="nav-subitem" id="nav-QFC">Civilian</div>
-          <div class="nav-subitem" id="nav-QFE">Defense</div>
-        </div>
-      </div>
-    </nav>
 
 
 
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Overview Page -->
-      <div class="page-content active" id="page-overview">
-        <div class="page-header">
-          <h1 class="page-title">Overview Dashboard</h1>
-          <p class="page-subtitle">Business Unit Completion Summary</p>
-        </div>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh Data">
+            ↻
+        </button>
 
 
 
 
-        <div class="container">
-          <div class="dashboard-content">
-            <div class="stats-overview" id="statsOverview">
-              <div class="stat-card">
-                <div class="stat-number" id="totalEmployees">0</div>
-                <div class="stat-label">Total Employees</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number" id="completedCount">0</div>
-                <div class="stat-label">Completed</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number" id="incompleteCount">0</div>
-                <div class="stat-label">Incomplete</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number" id="completionRate">0%</div>
-                <div class="stat-label">Completion Rate</div>
-              </div>
-            </div>
+        <script>
+            // Global variables
+            let clpData = [];
+            let currentPage = 'overview';
+            // List of business unit codes for navigation and stats. QF1 is merged into QF2 (SOS) and QFD is deprecated.
+            const businessUnits = ['QF2', 'QFA', 'QFB', 'QFC', 'QFE'];
 
+            // Mapping of business unit codes to their human‑friendly names. Used for display throughout the UI.
+            const businessUnitDisplayNames = {
+                QF2: 'SOS',
+                QFA: 'Army',
+                QFB: 'AF/N/SF',
+                QFC: 'Civilian',
+                QFE: 'Defense'
+            };
 
 
 
-            <div class="loading" id="loading">
-              <div class="spinner"></div>
-              <p>Loading CLP data...</p>
-            </div>
 
-
-
-
-            <div class="business-units-grid" id="businessUnitsGrid">
-              <!-- Business unit cards will be populated by JavaScript -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-
-
-      <!-- Business Units Page -->
-      <div class="page-content" id="page-business-units">
-        <div class="page-header">
-          <h1 class="page-title">Business Units</h1>
-          <p class="page-subtitle">Individual Business Unit Analytics</p>
-        </div>
-
-
-
-
-        <div class="loading" id="loading-business-units">
-          <div class="spinner"></div>
-          <p>Loading business unit details...</p>
-        </div>
-
-
-
-
-        <div id="businessUnitsDetailContainer">
-          <!-- Business unit detail cards will be populated by JavaScript -->
-        </div>
-      </div>
-
-
-
-
-      <!-- Individual Business Unit Pages -->
-      <div class="page-content" id="page-QF2">
-        <div class="page-header">
-        <h1 class="page-title">SOS Business Unit</h1>
-          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
-        </div>
-        <div id="QF2-content"></div>
-      </div>
-
-
-
-
-      <div class="page-content" id="page-QFA">
-        <div class="page-header">
-          <h1 class="page-title">Army Business Unit</h1>
-          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
-        </div>
-        <div id="QFA-content"></div>
-      </div>
-
-
-
-
-      <div class="page-content" id="page-QFB">
-        <div class="page-header">
-          <h1 class="page-title">AF/N/SF Business Unit</h1>
-          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
-        </div>
-        <div id="QFB-content"></div>
-      </div>
-
-
-
-
-      <div class="page-content" id="page-QFC">
-        <div class="page-header">
-          <h1 class="page-title">Civilian Business Unit</h1>
-          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
-        </div>
-        <div id="QFC-content"></div>
-      </div>
-
-
-
-
-
-
-
-
-      <div class="page-content" id="page-QFE">
-        <div class="page-header">
-          <h1 class="page-title">Defense Business Unit</h1>
-          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
-        </div>
-        <div id="QFE-content"></div>
-      </div>
-    </main>
-  </div>
-
-
-
-
-  <button class="refresh-btn" id="refreshBtn" title="Refresh Data">
-        ↻
-    </button>
-
-
-
-
-  <script>
-    // Global variables
-        let clpData = [];
-        let currentPage = 'overview';
-        // List of business unit codes for navigation and stats. QF1 is merged into QF2 (SOS) and QFD is deprecated.
-        const businessUnits = ['QF2', 'QFA', 'QFB', 'QFC', 'QFE'];
-
-        // Mapping of business unit codes to their human‑friendly names. Used for display throughout the UI.
-        const businessUnitDisplayNames = {
-            QF2: 'SOS',
-            QFA: 'Army',
-            QFB: 'AF/N/SF',
-            QFC: 'Civilian',
-            QFE: 'Defense'
-        };
-
-
-
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeEventListeners();
-            initializeBusinessUnitNavigation();
-            loadDashboardData();
-        });
-
-
-
-
-        // Event Listeners
-        function initializeEventListeners() {
-            // Sidebar toggle - make sure it works in both expanded and collapsed states
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('collapsed');
-                console.log('Sidebar toggled, collapsed:', sidebar.classList.contains('collapsed'));
-            });
-            
-            // Overview navigation
-            document.getElementById('nav-overview').addEventListener('click', function(e) {
-                e.preventDefault();
-                showPage('overview');
-            });
-            
-            // Refresh button
-            document.getElementById('refreshBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                refreshCurrentPage();
-            });
-        }
-
-
-
-
-        // Enhanced Business Units Navigation
-        function initializeBusinessUnitNavigation() {
-            // Business Units main navigation with expansion
-            document.getElementById('nav-business-units').addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleBusinessUnitsSubmenu();
-            });
-            
-            // Individual business unit navigation
-            businessUnits.forEach(unit => {
-                const navElement = document.getElementById(`nav-${unit}`);
-                if (navElement) {
-                    navElement.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        // Remove active class from all subitems
-                        document.querySelectorAll('.nav-subitem').forEach(item => {
-                            item.classList.remove('active');
-                        });
-                        
-                        // Add active class to clicked item
-                        this.classList.add('active');
-                        
-                        // Show the business unit page
-                        showBusinessUnitPage(unit);
-                    });
-                }
-            });
-        }
-
-
-
-
-        // Enhanced Business Units Toggle Function
-        function toggleBusinessUnitsSubmenu() {
-            const submenu = document.getElementById('business-units-submenu');
-            const navItem = document.getElementById('nav-business-units');
-            const expandIcon = navItem.querySelector('.nav-expand');
-            
-            // Toggle the expanded class on both elements
-            const isExpanding = !submenu.classList.contains('expanded');
-            
-            if (isExpanding) {
-                // Expanding
-                submenu.classList.add('expanded');
-                navItem.classList.add('expanded');
-                
-                // Show the business units overview page
-                showPage('business-units');
-                
-                // Update expand icon
-                if (expandIcon) {
-                    expandIcon.textContent = '▼';
-                }
-                
-                // Add smooth animation class
-                submenu.classList.add('expanding');
-                setTimeout(() => {
-                    submenu.classList.remove('expanding');
-                }, 300);
-                
-            } else {
-                // Collapsing
-                submenu.classList.add('collapsing');
-                
-                setTimeout(() => {
-                    submenu.classList.remove('expanded', 'collapsing');
-                    navItem.classList.remove('expanded');
-                    
-                    // Update expand icon
-                    if (expandIcon) {
-                        expandIcon.textContent = '▶';
-                    }
-                }, 300);
-                
-                // If currently on business units page, go back to overview
-                if (currentPage === 'business-units' || businessUnits.includes(currentPage)) {
-                    showPage('overview');
-                }
-            }
-        }
-
-
-
-
-        // Navigation functions
-        function showPage(pageId) {
-            // Update navigation
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.querySelectorAll('.nav-subitem').forEach(item => item.classList.remove('active'));
-            
-            if (pageId === 'overview') {
-                document.getElementById('nav-overview').classList.add('active');
-            } else if (pageId === 'business-units') {
-                document.getElementById('nav-business-units').classList.add('active');
-                // Ensure submenu is expanded when showing business units page
-                const submenu = document.getElementById('business-units-submenu');
-                const navItem = document.getElementById('nav-business-units');
-                const expandIcon = navItem.querySelector('.nav-expand');
-                if (!submenu.classList.contains('expanded')) {
-                    submenu.classList.add('expanded');
-                    navItem.classList.add('expanded');
-                    if (expandIcon) {
-                        expandIcon.textContent = '▼';
-                    }
-                }
-            } else if (businessUnits.includes(pageId)) {
-                document.getElementById('nav-business-units').classList.add('active');
-                document.getElementById(`nav-${pageId}`).classList.add('active');
-                // Ensure submenu is expanded when showing individual business unit
-                const submenu = document.getElementById('business-units-submenu');
-                const navItem = document.getElementById('nav-business-units');
-                const expandIcon = navItem.querySelector('.nav-expand');
-                if (!submenu.classList.contains('expanded')) {
-                    submenu.classList.add('expanded');
-                    navItem.classList.add('expanded');
-                    if (expandIcon) {
-                        expandIcon.textContent = '▼';
-                    }
-                }
-            }
-            
-            // Update page content
-            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            
-            currentPage = pageId;
-            
-            // Load page-specific data
-            if (pageId === 'business-units') {
-                loadBusinessUnitsPage();
-            } else if (businessUnits.includes(pageId)) {
-                loadIndividualBusinessUnitPage(pageId);
-            }
-        }
-
-
-
-
-        function showBusinessUnitPage(unitCode) {
-            showPage(unitCode);
-        }
-
-
-
-
-        function refreshCurrentPage() {
-            if (currentPage === 'overview') {
+            // Initialize the application
+            document.addEventListener('DOMContentLoaded', function () {
+                initializeEventListeners();
+                initializeBusinessUnitNavigation();
                 loadDashboardData();
-            } else if (currentPage === 'business-units') {
-                loadBusinessUnitsPage();
-            } else if (businessUnits.includes(currentPage)) {
-                loadIndividualBusinessUnitPage(currentPage);
-            }
-        }
+            });
 
 
 
 
-        // Utility functions
-        function extractBusinessUnit(orgCode) {
-            if (!orgCode || typeof orgCode !== 'string') return 'Unknown';
-            const code = orgCode.toUpperCase().trim();
-            // Defence subcodes should be grouped with the Army
-            if (code.startsWith('QFEE') || code.startsWith('QFEEB') || code.startsWith('QFEEC')) {
-                return 'QFA';
-            }
-            // Combine QF1 and QF2 into a single SOS group
-            if (code.startsWith('QF1')) {
-                return 'QF2';
-            }
-            const prefix = code.substring(0, 3);
-            // Ignore deprecated QFD entries
-            if (prefix === 'QFD') {
-                return 'Unknown';
-            }
-            return prefix;
-        }
+            // Event Listeners
+            function initializeEventListeners() {
+                // Sidebar toggle - make sure it works in both expanded and collapsed states
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                const sidebar = document.getElementById('sidebar');
 
+                sidebarToggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('collapsed');
+                    console.log('Sidebar toggled, collapsed:', sidebar.classList.contains('collapsed'));
+                });
 
+                // Overview navigation
+                document.getElementById('nav-overview').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    showPage('overview');
+                });
 
-
-        function isComplete(remaining) {
-            return remaining < 1;
-        }
-
-
-
-
-        // Sample data generation
-        function generateSampleData() {
-            const sampleData = [];
-            const rangeValues = ['100%', '100%', '100%', '100%', '100%', '0-49%', '0-49%', '0-49%', '50-99%']; // Based on your actual data
-            
-            for (let i = 0; i < 150; i++) {
-                const businessUnit = businessUnits[Math.floor(Math.random() * businessUnits.length)];
-                const remaining = Math.random() * 10;
-                const rangeIndex = i % rangeValues.length; // Cycle through your actual range values
-                
-                sampleData.push({
-                    employee: `Employee ${i + 1}`,
-                    orgCode: businessUnit + (Math.floor(Math.random() * 9000) + 1000),
-                    supervisor: `Supervisor ${Math.floor(i / 10) + 1}`,
-                    range: rangeValues[rangeIndex], // Use your actual range format
-                    percentEarned: Math.floor(Math.random() * 101),
-                    required: Math.floor(Math.random() * 20) + 5,
-                    earned: Math.floor(Math.random() * 20),
-                    remaining: remaining,
-                    fcp: Math.random() > 0.7 ? 'Yes' : 'No',
-                    ppm: Math.random() > 0.6 ? 'Yes' : 'No',
-                    cor3: Math.random() > 0.8 ? 'Yes' : 'No',
-                    cor2: Math.random() > 0.5 ? 'Yes' : 'No',
-                    cor1: Math.random() > 0.4 ? 'Yes' : 'No'
+                // Refresh button
+                document.getElementById('refreshBtn').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    refreshCurrentPage();
                 });
             }
-            
-            console.log('Generated sample data with range distribution:');
-            const sampleRangeCount = {};
-            sampleData.forEach(emp => {
-                sampleRangeCount[emp.range] = (sampleRangeCount[emp.range] || 0) + 1;
-            });
-            console.log('Sample range counts:', sampleRangeCount);
-            
-            return sampleData;
-        }
 
 
 
 
-        // Data processing functions
-        function processBusinessUnitData(data) {
-            const businessUnitStats = {};
-            
-            businessUnits.forEach(unit => {
-                businessUnitStats[unit] = {
-                    total: 0,
-                    completed: 0,
-                    incomplete: 0,
-                    employees: []
-                };
-            });
+            // Enhanced Business Units Navigation
+            function initializeBusinessUnitNavigation() {
+                // Business Units main navigation with expansion
+                document.getElementById('nav-business-units').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleBusinessUnitsSubmenu();
+                });
+
+                // Individual business unit navigation
+                businessUnits.forEach(unit => {
+                    const navElement = document.getElementById(`nav-${unit}`);
+                    if (navElement) {
+                        navElement.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            // Remove active class from all subitems
+                            document.querySelectorAll('.nav-subitem').forEach(item => {
+                                item.classList.remove('active');
+                            });
+
+                            // Add active class to clicked item
+                            this.classList.add('active');
+
+                            // Show the business unit page
+                            showBusinessUnitPage(unit);
+                        });
+                    }
+                });
+            }
 
 
 
 
-            data.forEach(record => {
-                const businessUnit = extractBusinessUnit(record.orgCode);
-                
-                if (businessUnitStats[businessUnit]) {
-                    businessUnitStats[businessUnit].total++;
-                    businessUnitStats[businessUnit].employees.push(record);
-                    
-                    if (isComplete(record.remaining)) {
-                        businessUnitStats[businessUnit].completed++;
-                    } else {
-                        businessUnitStats[businessUnit].incomplete++;
+            // Enhanced Business Units Toggle Function
+            function toggleBusinessUnitsSubmenu() {
+                const submenu = document.getElementById('business-units-submenu');
+                const navItem = document.getElementById('nav-business-units');
+                const expandIcon = navItem.querySelector('.nav-expand');
+
+                // Toggle the expanded class on both elements
+                const isExpanding = !submenu.classList.contains('expanded');
+
+                if (isExpanding) {
+                    // Expanding
+                    submenu.classList.add('expanded');
+                    navItem.classList.add('expanded');
+
+                    // Show the business units overview page
+                    showPage('business-units');
+
+                    // Update expand icon
+                    if (expandIcon) {
+                        expandIcon.textContent = '▼';
+                    }
+
+                    // Add smooth animation class
+                    submenu.classList.add('expanding');
+                    setTimeout(() => {
+                        submenu.classList.remove('expanding');
+                    }, 300);
+
+                } else {
+                    // Collapsing
+                    submenu.classList.add('collapsing');
+
+                    setTimeout(() => {
+                        submenu.classList.remove('expanded', 'collapsing');
+                        navItem.classList.remove('expanded');
+
+                        // Update expand icon
+                        if (expandIcon) {
+                            expandIcon.textContent = '▶';
+                        }
+                    }, 300);
+
+                    // If currently on business units page, go back to overview
+                    if (currentPage === 'business-units' || businessUnits.includes(currentPage)) {
+                        showPage('overview');
                     }
                 }
-            });
+            }
 
 
 
 
-            return businessUnitStats;
-        }
+            // Navigation functions
+            function showPage(pageId) {
+                // Update navigation
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.nav-subitem').forEach(item => item.classList.remove('active'));
+
+                if (pageId === 'overview') {
+                    document.getElementById('nav-overview').classList.add('active');
+                } else if (pageId === 'business-units') {
+                    document.getElementById('nav-business-units').classList.add('active');
+                    // Ensure submenu is expanded when showing business units page
+                    const submenu = document.getElementById('business-units-submenu');
+                    const navItem = document.getElementById('nav-business-units');
+                    const expandIcon = navItem.querySelector('.nav-expand');
+                    if (!submenu.classList.contains('expanded')) {
+                        submenu.classList.add('expanded');
+                        navItem.classList.add('expanded');
+                        if (expandIcon) {
+                            expandIcon.textContent = '▼';
+                        }
+                    }
+                } else if (businessUnits.includes(pageId)) {
+                    document.getElementById('nav-business-units').classList.add('active');
+                    document.getElementById(`nav-${pageId}`).classList.add('active');
+                    // Ensure submenu is expanded when showing individual business unit
+                    const submenu = document.getElementById('business-units-submenu');
+                    const navItem = document.getElementById('nav-business-units');
+                    const expandIcon = navItem.querySelector('.nav-expand');
+                    if (!submenu.classList.contains('expanded')) {
+                        submenu.classList.add('expanded');
+                        navItem.classList.add('expanded');
+                        if (expandIcon) {
+                            expandIcon.textContent = '▼';
+                        }
+                    }
+                }
+
+                // Update page content
+                document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+                document.getElementById(`page-${pageId}`).classList.add('active');
+
+                currentPage = pageId;
+
+                // Load page-specific data
+                if (pageId === 'business-units') {
+                    loadBusinessUnitsPage();
+                } else if (businessUnits.includes(pageId)) {
+                    loadIndividualBusinessUnitPage(pageId);
+                }
+            }
 
 
 
 
-        // Visualization functions
-        function createDonutChart(percentage, label) {
-            const radius = 55;
-            const circumference = 2 * Math.PI * radius;
-            const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-            
-            return `
+            function showBusinessUnitPage(unitCode) {
+                showPage(unitCode);
+            }
+
+
+
+
+            function refreshCurrentPage() {
+                if (currentPage === 'overview') {
+                    loadDashboardData();
+                } else if (currentPage === 'business-units') {
+                    loadBusinessUnitsPage();
+                } else if (businessUnits.includes(currentPage)) {
+                    loadIndividualBusinessUnitPage(currentPage);
+                }
+            }
+
+
+
+
+            // Utility functions
+            function extractBusinessUnit(orgCode) {
+                if (!orgCode || typeof orgCode !== 'string') return 'Unknown';
+                const code = orgCode.toUpperCase().trim();
+                // Defence subcodes should be grouped with the Army
+                if (code.startsWith('QFEE') || code.startsWith('QFEEB') || code.startsWith('QFEEC')) {
+                    return 'QFA';
+                }
+                // Combine QF1 and QF2 into a single SOS group
+                if (code.startsWith('QF1')) {
+                    return 'QF2';
+                }
+                const prefix = code.substring(0, 3);
+                // Ignore deprecated QFD entries
+                if (prefix === 'QFD') {
+                    return 'Unknown';
+                }
+                return prefix;
+            }
+
+
+
+
+            function isComplete(remaining) {
+                return remaining < 1;
+            }
+
+
+
+
+            // Sample data generation
+            function generateSampleData() {
+                const sampleData = [];
+                const rangeValues = ['100%', '100%', '100%', '100%', '100%', '0-49%', '0-49%', '0-49%', '50-99%']; // Based on your actual data
+
+                for (let i = 0; i < 150; i++) {
+                    const businessUnit = businessUnits[Math.floor(Math.random() * businessUnits.length)];
+                    const remaining = Math.random() * 10;
+                    const rangeIndex = i % rangeValues.length; // Cycle through your actual range values
+
+                    sampleData.push({
+                        employee: `Employee ${i + 1}`,
+                        orgCode: businessUnit + (Math.floor(Math.random() * 9000) + 1000),
+                        supervisor: `Supervisor ${Math.floor(i / 10) + 1}`,
+                        range: rangeValues[rangeIndex], // Use your actual range format
+                        percentEarned: Math.floor(Math.random() * 101),
+                        required: Math.floor(Math.random() * 20) + 5,
+                        earned: Math.floor(Math.random() * 20),
+                        remaining: remaining,
+                        fcp: Math.random() > 0.7 ? 'Yes' : 'No',
+                        ppm: Math.random() > 0.6 ? 'Yes' : 'No',
+                        cor3: Math.random() > 0.8 ? 'Yes' : 'No',
+                        cor2: Math.random() > 0.5 ? 'Yes' : 'No',
+                        cor1: Math.random() > 0.4 ? 'Yes' : 'No'
+                    });
+                }
+
+                console.log('Generated sample data with range distribution:');
+                const sampleRangeCount = {};
+                sampleData.forEach(emp => {
+                    sampleRangeCount[emp.range] = (sampleRangeCount[emp.range] || 0) + 1;
+                });
+                console.log('Sample range counts:', sampleRangeCount);
+
+                return sampleData;
+            }
+
+
+
+
+            // Data processing functions
+            function processBusinessUnitData(data) {
+                const businessUnitStats = {};
+
+                businessUnits.forEach(unit => {
+                    businessUnitStats[unit] = {
+                        total: 0,
+                        completed: 0,
+                        incomplete: 0,
+                        employees: []
+                    };
+                });
+
+
+
+
+                data.forEach(record => {
+                    const businessUnit = extractBusinessUnit(record.orgCode);
+
+                    if (businessUnitStats[businessUnit]) {
+                        businessUnitStats[businessUnit].total++;
+                        businessUnitStats[businessUnit].employees.push(record);
+
+                        if (isComplete(record.remaining)) {
+                            businessUnitStats[businessUnit].completed++;
+                        } else {
+                            businessUnitStats[businessUnit].incomplete++;
+                        }
+                    }
+                });
+
+
+
+
+                return businessUnitStats;
+            }
+
+
+
+
+            // Visualization functions
+            function createDonutChart(percentage, label) {
+                const radius = 55;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+
+                return `
                 <div class="donut-chart">
                     <svg viewBox="0 0 120 120">
                         <circle class="donut-segment donut-background" cx="60" cy="60" r="${radius}"></circle>
@@ -543,15 +543,15 @@
                     </div>
                 </div>
             `;
-        }
+            }
 
 
 
 
-        function createRangeBarChart(rangeData) {
-            const total = Object.values(rangeData).reduce((sum, count) => sum + count, 0);
-            
-            return `
+            function createRangeBarChart(rangeData) {
+                const total = Object.values(rangeData).reduce((sum, count) => sum + count, 0);
+
+                return `
                 <div class="bar-chart">
                     <div class="bar-item">
                         <div class="bar-label">0%</div>
@@ -583,147 +583,147 @@
                     </div>
                 </div>
             `;
-        }
-
-
-
-
-        function analyzeRangeData(employees) {
-            const rangeData = {
-                '0': 0,
-                '1-49': 0,
-                '50-99': 0,
-                '100': 0
-            };
-
-
-
-
-            console.log('=== RANGE DATA ANALYSIS DEBUG ===');
-            console.log('Total employees to analyze:', employees.length);
-            
-            // Let's see what unique range values we have
-            const uniqueRanges = new Set();
-            employees.forEach(emp => {
-                uniqueRanges.add(emp.range);
-            });
-            console.log('Unique range values found:', Array.from(uniqueRanges));
-            console.log('Unique range values details:', Array.from(uniqueRanges).map(val => `"${val}" (type: ${typeof val}, length: ${val ? val.toString().length : 'null'})`));
-            
-            // Check for 100% specifically
-            const has100Percent = employees.some(emp => emp.range === '100%');
-            const has100PercentLoose = employees.some(emp => emp.range && emp.range.toString().includes('100'));
-            console.log('Direct check - any exact "100%"?', has100Percent);
-            console.log('Direct check - any containing "100"?', has100PercentLoose);
-            
-            // Find first 100% entry for detailed analysis
-            const first100 = employees.find(emp => emp.range && emp.range.toString().includes('100'));
-            if (first100) {
-                console.log('First 100% entry found:', first100);
-                console.log('Range value detailed analysis:');
-                console.log('  Raw value:', first100.range);
-                console.log('  Type:', typeof first100.range);
-                console.log('  Length:', first100.range.toString().length);
-                console.log('  Char codes:', Array.from(first100.range.toString()).map(char => `${char}(${char.charCodeAt(0)})`));
-                console.log('  Equals "100%"?', first100.range === '100%');
-                console.log('  Equals "100%" after trim?', first100.range.toString().trim() === '100%');
             }
-            
-            employees.forEach((emp, index) => {
-                const rangeValue = emp.range;
-                
-                // Log first 15 for debugging
-                if (index < 15) {
-                    console.log(`Employee ${index}: range="${rangeValue}" (type: ${typeof rangeValue})`);
+
+
+
+
+            function analyzeRangeData(employees) {
+                const rangeData = {
+                    '0': 0,
+                    '1-49': 0,
+                    '50-99': 0,
+                    '100': 0
+                };
+
+
+
+
+                console.log('=== RANGE DATA ANALYSIS DEBUG ===');
+                console.log('Total employees to analyze:', employees.length);
+
+                // Let's see what unique range values we have
+                const uniqueRanges = new Set();
+                employees.forEach(emp => {
+                    uniqueRanges.add(emp.range);
+                });
+                console.log('Unique range values found:', Array.from(uniqueRanges));
+                console.log('Unique range values details:', Array.from(uniqueRanges).map(val => `"${val}" (type: ${typeof val}, length: ${val ? val.toString().length : 'null'})`));
+
+                // Check for 100% specifically
+                const has100Percent = employees.some(emp => emp.range === '100%');
+                const has100PercentLoose = employees.some(emp => emp.range && emp.range.toString().includes('100'));
+                console.log('Direct check - any exact "100%"?', has100Percent);
+                console.log('Direct check - any containing "100"?', has100PercentLoose);
+
+                // Find first 100% entry for detailed analysis
+                const first100 = employees.find(emp => emp.range && emp.range.toString().includes('100'));
+                if (first100) {
+                    console.log('First 100% entry found:', first100);
+                    console.log('Range value detailed analysis:');
+                    console.log('  Raw value:', first100.range);
+                    console.log('  Type:', typeof first100.range);
+                    console.log('  Length:', first100.range.toString().length);
+                    console.log('  Char codes:', Array.from(first100.range.toString()).map(char => `${char}(${char.charCodeAt(0)})`));
+                    console.log('  Equals "100%"?', first100.range === '100%');
+                    console.log('  Equals "100%" after trim?', first100.range.toString().trim() === '100%');
                 }
-                
-                let category = 'unknown';
-                
-                // Handle null/undefined/empty
-                if (rangeValue === null || rangeValue === undefined || rangeValue === '') {
-                    rangeData['0']++;
-                    category = '0 (empty)';
-                } else {
-                    // Convert to string and clean up
-                    const rangeStr = rangeValue.toString().trim();
-                    
-                    // Log character analysis for first few 100% entries
-                    if (index < 15 && rangeStr.includes('100')) {
-                        console.log(`  Character analysis for "${rangeStr}":`, Array.from(rangeStr).map(char => `${char}(${char.charCodeAt(0)})`));
+
+                employees.forEach((emp, index) => {
+                    const rangeValue = emp.range;
+
+                    // Log first 15 for debugging
+                    if (index < 15) {
+                        console.log(`Employee ${index}: range="${rangeValue}" (type: ${typeof rangeValue})`);
                     }
-                    
-                    // EXACT string matching with detailed logging
-                    if (rangeStr === '100%') {
-                        rangeData['100']++;
-                        category = '100%';
-                        if (index < 5) console.log(`  MATCHED 100% for employee ${index}`);
-                    } else if (rangeStr === '0-49%') {
-                        rangeData['1-49']++;
-                        category = '0-49%';
-                    } else if (rangeStr === '50-99%') {
-                        rangeData['50-99']++;
-                        category = '50-99%';
-                    } else if (rangeStr === '0%') {
+
+                    let category = 'unknown';
+
+                    // Handle null/undefined/empty
+                    if (rangeValue === null || rangeValue === undefined || rangeValue === '') {
                         rangeData['0']++;
-                        category = '0%';
-                    } else if (rangeStr === '0 CLPS') {
-                        rangeData['0']++;
-                        category = '0% (0 CLPS)';
+                        category = '0 (empty)';
                     } else {
-                        // Try alternative matching for 100%
-                        if (rangeStr.includes('100') && rangeStr.includes('%')) {
+                        // Convert to string and clean up
+                        const rangeStr = rangeValue.toString().trim();
+
+                        // Log character analysis for first few 100% entries
+                        if (index < 15 && rangeStr.includes('100')) {
+                            console.log(`  Character analysis for "${rangeStr}":`, Array.from(rangeStr).map(char => `${char}(${char.charCodeAt(0)})`));
+                        }
+
+                        // EXACT string matching with detailed logging
+                        if (rangeStr === '100%') {
                             rangeData['100']++;
-                            category = '100% (loose match)';
-                            if (index < 5) console.log(`  LOOSE MATCHED 100% for employee ${index}: "${rangeStr}"`);
-                        } else {
-                            if (index < 15) {
-                                console.log(`UNMATCHED STRING: "${rangeStr}" - This will be categorized as 0% (unmatched)`);
-                            }
+                            category = '100%';
+                            if (index < 5) console.log(`  MATCHED 100% for employee ${index}`);
+                        } else if (rangeStr === '0-49%') {
+                            rangeData['1-49']++;
+                            category = '0-49%';
+                        } else if (rangeStr === '50-99%') {
+                            rangeData['50-99']++;
+                            category = '50-99%';
+                        } else if (rangeStr === '0%') {
                             rangeData['0']++;
-                            category = '0% (unmatched: "' + rangeStr + '")';
+                            category = '0%';
+                        } else if (rangeStr === '0 CLPS') {
+                            rangeData['0']++;
+                            category = '0% (0 CLPS)';
+                        } else {
+                            // Try alternative matching for 100%
+                            if (rangeStr.includes('100') && rangeStr.includes('%')) {
+                                rangeData['100']++;
+                                category = '100% (loose match)';
+                                if (index < 5) console.log(`  LOOSE MATCHED 100% for employee ${index}: "${rangeStr}"`);
+                            } else {
+                                if (index < 15) {
+                                    console.log(`UNMATCHED STRING: "${rangeStr}" - This will be categorized as 0% (unmatched)`);
+                                }
+                                rangeData['0']++;
+                                category = '0% (unmatched: "' + rangeStr + '")';
+                            }
                         }
                     }
-                }
-                
-                // Log categorization for first 15 employees
-                if (index < 15) {
-                    console.log(`  -> ${category}`);
-                }
-            });
+
+                    // Log categorization for first 15 employees
+                    if (index < 15) {
+                        console.log(`  -> ${category}`);
+                    }
+                });
 
 
 
 
-            console.log('=== FINAL RANGE DISTRIBUTION ===');
-            console.log('0%:', rangeData['0']);
-            console.log('0-49%:', rangeData['1-49']);
-            console.log('50-99%:', rangeData['50-99']);
-            console.log('100%:', rangeData['100']);
-            console.log('Total classified:', Object.values(rangeData).reduce((a, b) => a + b, 0));
-            console.log('=== CRITICAL: 100% count is', rangeData['100'], '- if this is 0 but you expect 100% entries, the data mismatch is confirmed ===');
-            console.log('================================');
-            
-            return rangeData;
-        }
+                console.log('=== FINAL RANGE DISTRIBUTION ===');
+                console.log('0%:', rangeData['0']);
+                console.log('0-49%:', rangeData['1-49']);
+                console.log('50-99%:', rangeData['50-99']);
+                console.log('100%:', rangeData['100']);
+                console.log('Total classified:', Object.values(rangeData).reduce((a, b) => a + b, 0));
+                console.log('=== CRITICAL: 100% count is', rangeData['100'], '- if this is 0 but you expect 100% entries, the data mismatch is confirmed ===');
+                console.log('================================');
+
+                return rangeData;
+            }
 
 
 
 
-        function createBusinessUnitVisualization(unitCode, stats) {
-            const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-            const rangeData = analyzeRangeData(stats.employees);
-            
-            const employeesWithCLPs = stats.employees.filter(emp => emp.required > 0).length;
-            const avgRequired = stats.employees.length > 0 ? 
-                (stats.employees.reduce((sum, emp) => sum + (emp.required || 0), 0) / stats.employees.length).toFixed(1) : 0;
-            const avgEarned = stats.employees.length > 0 ? 
-                (stats.employees.reduce((sum, emp) => sum + (emp.earned || 0), 0) / stats.employees.length).toFixed(1) : 0;
+            function createBusinessUnitVisualization(unitCode, stats) {
+                const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                const rangeData = analyzeRangeData(stats.employees);
+
+                const employeesWithCLPs = stats.employees.filter(emp => emp.required > 0).length;
+                const avgRequired = stats.employees.length > 0 ?
+                    (stats.employees.reduce((sum, emp) => sum + (emp.required || 0), 0) / stats.employees.length).toFixed(1) : 0;
+                const avgEarned = stats.employees.length > 0 ?
+                    (stats.employees.reduce((sum, emp) => sum + (emp.earned || 0), 0) / stats.employees.length).toFixed(1) : 0;
 
 
 
 
-            const displayName = businessUnitDisplayNames[unitCode] || unitCode;
-            return `
+                const displayName = businessUnitDisplayNames[unitCode] || unitCode;
+                return `
                 <div class="chart-container">
                     <h3 class="chart-title">${displayName} - Detailed Analytics</h3>
                     
@@ -786,36 +786,36 @@
                     </div>
                 </div>
             `;
-        }
+            }
 
 
 
 
-        // Overview page functions
-        function updateOverallStats(data) {
-            const totalEmployees = data.length;
-            const completedCount = data.filter(record => isComplete(record.remaining)).length;
-            const incompleteCount = totalEmployees - completedCount;
-            const completionRate = totalEmployees > 0 ? Math.round((completedCount / totalEmployees) * 100) : 0;
+            // Overview page functions
+            function updateOverallStats(data) {
+                const totalEmployees = data.length;
+                const completedCount = data.filter(record => isComplete(record.remaining)).length;
+                const incompleteCount = totalEmployees - completedCount;
+                const completionRate = totalEmployees > 0 ? Math.round((completedCount / totalEmployees) * 100) : 0;
 
 
 
 
-            document.getElementById('totalEmployees').textContent = totalEmployees;
-            document.getElementById('completedCount').textContent = completedCount;
-            document.getElementById('incompleteCount').textContent = incompleteCount;
-            document.getElementById('completionRate').textContent = completionRate + '%';
-        }
+                document.getElementById('totalEmployees').textContent = totalEmployees;
+                document.getElementById('completedCount').textContent = completedCount;
+                document.getElementById('incompleteCount').textContent = incompleteCount;
+                document.getElementById('completionRate').textContent = completionRate + '%';
+            }
 
 
 
 
-        function createBusinessUnitCard(unitCode, stats) {
-            const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-            const isOverallComplete = completionRate === 100;
-            
-            const displayName = businessUnitDisplayNames[unitCode] || unitCode;
-            return `
+            function createBusinessUnitCard(unitCode, stats) {
+                const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                const isOverallComplete = completionRate === 100;
+
+                const displayName = businessUnitDisplayNames[unitCode] || unitCode;
+                return `
                 <div class="business-unit-card" onclick="showBusinessUnitPage('${unitCode}')">
                     <div class="business-unit-header">
                         <div class="business-unit-code">${displayName}</div>
@@ -844,45 +844,45 @@
                     </div>
                 </div>
             `;
-        }
+            }
 
 
 
 
-        function renderBusinessUnits(businessUnitStats) {
-            const grid = document.getElementById('businessUnitsGrid');
-            let cardsHTML = '';
+            function renderBusinessUnits(businessUnitStats) {
+                const grid = document.getElementById('businessUnitsGrid');
+                let cardsHTML = '';
 
 
 
 
-            businessUnits.forEach(unit => {
-                const stats = businessUnitStats[unit] || { total: 0, completed: 0, incomplete: 0 };
-                cardsHTML += createBusinessUnitCard(unit, stats);
-            });
+                businessUnits.forEach(unit => {
+                    const stats = businessUnitStats[unit] || { total: 0, completed: 0, incomplete: 0 };
+                    cardsHTML += createBusinessUnitCard(unit, stats);
+                });
 
 
 
 
-            grid.innerHTML = cardsHTML;
-        }
+                grid.innerHTML = cardsHTML;
+            }
 
 
 
 
-        // Business Units page functions
-        function createBusinessUnitDetailCard(unitCode, stats) {
-            const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-            const isOverallComplete = completionRate === 100;
-            
-            // Create visualization
-            const visualizationHTML = createBusinessUnitVisualization(unitCode, stats);
-            
-            let employeeTableHTML = '';
-            if (stats.employees && stats.employees.length > 0) {
-                const totalEmployees = stats.employees.length;
-                
-                employeeTableHTML = `
+            // Business Units page functions
+            function createBusinessUnitDetailCard(unitCode, stats) {
+                const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                const isOverallComplete = completionRate === 100;
+
+                // Create visualization
+                const visualizationHTML = createBusinessUnitVisualization(unitCode, stats);
+
+                let employeeTableHTML = '';
+                if (stats.employees && stats.employees.length > 0) {
+                    const totalEmployees = stats.employees.length;
+
+                    employeeTableHTML = `
                     <div class="table-info">
                         <span class="table-info-text">Employee Details</span>
                         <span class="table-info-count">
@@ -922,10 +922,10 @@
                         </table>
                     </div>
                 `;
-            }
-            
-            const displayName = businessUnitDisplayNames[unitCode] || unitCode;
-            return `
+                }
+
+                const displayName = businessUnitDisplayNames[unitCode] || unitCode;
+                return `
                 <div class="business-unit-detail-card" id="business-unit-${unitCode}">
                     <div class="business-unit-detail-header">
                         <h2 class="business-unit-title">${displayName}</h2>
@@ -937,12 +937,6 @@
                         </div>
                     </div>
 
-                    <!-- Supervisor search and suggestions -->
-                    <div class="supervisor-filter">
-                        <input type="text" id="supervisor-search-${unitCode}" class="supervisor-search-input" placeholder="Search supervisor...">
-                        <div id="supervisor-suggestions-${unitCode}" class="supervisor-suggestions"></div>
-                    </div>
-                    
                     <div class="business-unit-metrics">
                         <div class="metric-item">
                             <div class="metric-value">${stats.total}</div>
@@ -967,327 +961,527 @@
                     </div>
                     
                     ${visualizationHTML}
-                    
+
+                    <!-- Search filters: employee and supervisor -->
+                    <div class="search-filters">
+                        <div class="employee-filter">
+                            <input type="text" id="employee-search-${unitCode}" class="employee-search-input" placeholder="Filter by employee...">
+                            <div id="employee-suggestions-${unitCode}" class="employee-suggestions"></div>
+                        </div>
+                        <div class="supervisor-filter">
+                            <input type="text" id="supervisor-search-${unitCode}" class="supervisor-search-input" placeholder="Filter by supervisor...">
+                            <div id="supervisor-suggestions-${unitCode}" class="supervisor-suggestions"></div>
+                        </div>
+                    </div>
+
                     ${employeeTableHTML}
                 </div>
             `;
-        }
-
-
-
-
-        function loadBusinessUnitsPage() {
-            const loading = document.getElementById('loading-business-units');
-            const container = document.getElementById('businessUnitsDetailContainer');
-            
-            loading.style.display = 'block';
-            container.style.display = 'none';
-            
-            setTimeout(() => {
-                const businessUnitStats = processBusinessUnitData(clpData);
-                let detailHTML = '';
-                
-                businessUnits.forEach(unit => {
-                    const stats = businessUnitStats[unit] || { total: 0, completed: 0, incomplete: 0, employees: [] };
-                    detailHTML += createBusinessUnitDetailCard(unit, stats);
-                });
-                
-                container.innerHTML = detailHTML;
-
-                // After rendering the business unit cards, set up supervisor filtering for each unit.
-                Object.keys(businessUnitStats).forEach(unit => {
-                    const stats = businessUnitStats[unit] || { employees: [] };
-                    // Call setup only if the card is rendered
-                    if (stats && stats.employees && stats.employees.length >= 0) {
-                        setupSupervisorFilter(unit, stats.employees);
-                    }
-                });
-
-                loading.style.display = 'none';
-                container.style.display = 'block';
-            }, 500);
-        }
-
-
-
-
-        function loadIndividualBusinessUnitPage(unitCode) {
-            const container = document.getElementById(`${unitCode}-content`);
-            const businessUnitStats = processBusinessUnitData(clpData);
-            const stats = businessUnitStats[unitCode] || { total: 0, completed: 0, incomplete: 0, employees: [] };
-            
-            container.innerHTML = createBusinessUnitDetailCard(unitCode, stats);
-
-            // Set up supervisor filter for this individual business unit
-            setupSupervisorFilter(unitCode, stats.employees);
-        }
-
-        // -----------------------------------------------------------------------------
-        // Supervisor filter utilities and setup
-        // These functions enable searching and filtering by supervisor on each business unit page.
-
-        /**
-         * Parse supervisor email into first and last name and return an object.
-         * Handles emails in the form firstname.lastname@domain.com or similar.
-         * Splits on dots, underscores, or hyphens to be resilient to naming variations.
-         *
-         * @param {string} email - Supervisor email address
-         * @returns {{firstName: string, lastName: string, email: string}}
-         */
-        function parseSupervisorEmail(email) {
-            if (!email) {
-                return { firstName: '', lastName: '', email: email || '' };
-            }
-            const atIndex = email.indexOf('@');
-            const userPart = atIndex >= 0 ? email.slice(0, atIndex) : email;
-            // Split on dots, underscores or hyphens to handle various formats
-            const nameParts = userPart.split(/[._-]/).filter(Boolean);
-            let firstName = '';
-            let lastName = '';
-            if (nameParts.length >= 2) {
-                firstName = nameParts[0];
-                lastName = nameParts.slice(1).join(' ');
-            } else if (nameParts.length === 1) {
-                firstName = nameParts[0];
-            }
-            const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
-            return {
-                firstName: capitalize(firstName),
-                lastName: capitalize(lastName),
-                email: email
-            };
-        }
-
-        /**
-         * Format supervisor email into display string: "FirstName, LastName: email".
-         * Returns a human-friendly label used in the suggestions list.
-         *
-         * @param {string} email
-         * @returns {string}
-         */
-        function formatSupervisorDisplay(email) {
-            const parsed = parseSupervisorEmail(email || '');
-            return `${parsed.firstName}${parsed.lastName ? ', ' + parsed.lastName : ''}: ${parsed.email}`;
-        }
-
-        /**
-         * Filter the employees table by supervisor email.
-         * Shows only rows matching the selected supervisor or all rows if no supervisor is selected.
-         * Updates the "Showing" count in the table info element accordingly.
-         *
-         * @param {string} unitCode - Business unit code
-         * @param {string} selectedEmail - Supervisor email to filter by, or empty string to show all
-         */
-        function filterTableBySupervisor(unitCode, selectedEmail) {
-            const table = document.getElementById(`employee-table-${unitCode}`);
-            if (!table) return;
-            const tbody = table.querySelector('tbody');
-            if (!tbody) return;
-            const rows = tbody.getElementsByTagName('tr');
-            let visibleCount = 0;
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
-                if (!cells || cells.length < 2) continue;
-                const supervisorEmail = (cells[1].textContent || '').trim();
-                if (!selectedEmail || supervisorEmail.toLowerCase() === selectedEmail.toLowerCase()) {
-                    rows[i].style.display = '';
-                    visibleCount++;
-                } else {
-                    rows[i].style.display = 'none';
-                }
-            }
-            // Update table info count text if available
-            const card = document.getElementById(`business-unit-${unitCode}`);
-            if (card) {
-                const tableInfoCount = card.querySelector('.table-info-count');
-                if (tableInfoCount) {
-                    const total = rows.length;
-                    if (selectedEmail) {
-                        tableInfoCount.textContent = `Showing ${visibleCount} of ${total} employees`;
-                    } else {
-                        tableInfoCount.textContent = `Showing all ${total} employees (scroll for more)`;
-                    }
-                }
-            }
-        }
-
-        /**
-         * Set up supervisor search and filter functionality for a specific business unit.
-         * Adds event listeners to the search input, populates suggestions, and filters the table.
-         *
-         * @param {string} unitCode - Business unit code
-         * @param {Array<Object>} employees - Array of employee objects belonging to the unit
-         */
-        function setupSupervisorFilter(unitCode, employees) {
-            const input = document.getElementById(`supervisor-search-${unitCode}`);
-            const suggestionsContainer = document.getElementById(`supervisor-suggestions-${unitCode}`);
-            if (!input || !suggestionsContainer) {
-                return;
-            }
-            // Build list of unique supervisors with parsed names
-            const supervisorMap = {};
-            employees.forEach(emp => {
-                const supEmail = (emp.supervisor || '').trim();
-                if (supEmail && !supervisorMap[supEmail]) {
-                    supervisorMap[supEmail] = parseSupervisorEmail(supEmail);
-                }
-            });
-            const supervisorList = Object.values(supervisorMap);
-
-            // Helper to update suggestions based on the current query
-            function updateSuggestions() {
-                const query = (input.value || '').trim().toLowerCase();
-                suggestionsContainer.innerHTML = '';
-                if (!query) {
-                    suggestionsContainer.style.display = 'none';
-                    // Clear filter and show all employees when query is empty
-                    filterTableBySupervisor(unitCode, '');
-                    return;
-                }
-                // Filter supervisors by first name, last name, or email
-                const matches = supervisorList.filter(item => {
-                    return item.firstName.toLowerCase().includes(query) ||
-                           item.lastName.toLowerCase().includes(query) ||
-                           item.email.toLowerCase().includes(query);
-                }).slice(0, 10); // Limit to 10 suggestions
-                if (matches.length === 0) {
-                    suggestionsContainer.style.display = 'none';
-                    // Show all employees if no match found
-                    filterTableBySupervisor(unitCode, '');
-                    return;
-                }
-                matches.forEach(item => {
-                    const displayText = `${item.firstName}${item.lastName ? ', ' + item.lastName : ''}: ${item.email}`;
-                    const div = document.createElement('div');
-                    div.className = 'supervisor-suggestion-item';
-                    div.textContent = displayText;
-                    div.setAttribute('data-email', item.email);
-                    // Click handler for suggestion item
-                    div.addEventListener('click', () => {
-                        input.value = displayText;
-                        suggestionsContainer.style.display = 'none';
-                        filterTableBySupervisor(unitCode, item.email);
-                    });
-                    suggestionsContainer.appendChild(div);
-                });
-                suggestionsContainer.style.display = 'block';
             }
 
-            // Listen to input events on the search field
-            input.addEventListener('input', updateSuggestions);
-            // Hide suggestions when clicking outside the search area
-            document.addEventListener('click', function(event) {
-                if (!suggestionsContainer.contains(event.target) && event.target !== input) {
-                    suggestionsContainer.style.display = 'none';
-                }
-            });
-        }
 
 
 
+            function loadBusinessUnitsPage() {
+                const loading = document.getElementById('loading-business-units');
+                const container = document.getElementById('businessUnitsDetailContainer');
 
-        // Main data loading
-        function showLoading(show) {
-            const loading = document.getElementById('loading');
-            const grid = document.getElementById('businessUnitsGrid');
-            
-            if (show) {
                 loading.style.display = 'block';
-                grid.style.display = 'none';
-            } else {
-                loading.style.display = 'none';
-                grid.style.display = 'grid';
-            }
-        }
+                container.style.display = 'none';
 
-
-
-
-        async function loadDashboardData() {
-            showLoading(true);
-            
-            try {
-                console.log('=== LOADING DASHBOARD DATA ===');
-                
-                clpData = await new Promise((resolve, reject) => {
-                    google.script.run
-                        .withSuccessHandler(resolve)
-                        .withFailureHandler(reject)
-                        .getDashboardData();
-                });
-                
-                console.log('Data received from Google Apps Script:', clpData);
-                console.log('Number of records:', clpData ? clpData.length : 0);
-                
-                if (clpData && clpData.length > 0) {
-                    console.log('First 10 records from Google Apps Script with range values:');
-                    clpData.slice(0, 10).forEach((record, index) => {
-                        console.log(`Record ${index}: employee="${record.employee}", orgCode="${record.orgCode}", range="${record.range}", percentEarned="${record.percentEarned}"`);
-                    });
-                    
-                    // Show all unique range values found in the actual data
-                    const uniqueRanges = [...new Set(clpData.map(emp => emp.range))];
-                    console.log('ALL UNIQUE RANGE VALUES IN ACTUAL DATA:', uniqueRanges);
-                    
-                    // Count each range value
-                    const rangeCounts = {};
-                    clpData.forEach(emp => {
-                        const range = emp.range;
-                        rangeCounts[range] = (rangeCounts[range] || 0) + 1;
-                    });
-                    console.log('RANGE VALUE COUNTS:', rangeCounts);
-                }
-                
-                if (!clpData || clpData.length === 0) {
-                    console.log('No data from Google Apps Script, using sample data');
-                    clpData = generateSampleData();
-                    console.log('Generated sample data, first 3 records:');
-                    clpData.slice(0, 3).forEach((record, index) => {
-                        console.log(`Sample Record ${index}:`, record);
-                    });
-                }
-                
-                const businessUnitStats = processBusinessUnitData(clpData);
-                updateOverallStats(clpData);
-                renderBusinessUnits(businessUnitStats);
-                
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                console.log('Falling back to sample data due to error');
-                clpData = generateSampleData();
-                
-                const businessUnitStats = processBusinessUnitData(clpData);
-                updateOverallStats(clpData);
-                renderBusinessUnits(businessUnitStats);
-                
                 setTimeout(() => {
-                    alert('Error loading live data. Showing sample data. Please check if processLatestCLPDataRobust() has been run.');
-                }, 1000);
-            } finally {
-                showLoading(false);
+                    const businessUnitStats = processBusinessUnitData(clpData);
+                    let detailHTML = '';
+
+                    businessUnits.forEach(unit => {
+                        const stats = businessUnitStats[unit] || { total: 0, completed: 0, incomplete: 0, employees: [] };
+                        detailHTML += createBusinessUnitDetailCard(unit, stats);
+                    });
+
+                    container.innerHTML = detailHTML;
+
+                    // After rendering the business unit cards, set up both supervisor and employee filtering for each unit.
+                    Object.keys(businessUnitStats).forEach(unit => {
+                        const stats = businessUnitStats[unit] || { employees: [] };
+                        if (stats && stats.employees && stats.employees.length >= 0) {
+                            setupSupervisorFilter(unit, stats.employees);
+                            setupEmployeeFilter(unit, stats.employees);
+                        }
+                    });
+
+                    loading.style.display = 'none';
+                    container.style.display = 'block';
+                }, 500);
             }
-        }
 
 
 
 
-        // Note: Auto-refresh disabled to prevent unnecessary reloads. Manual refresh via the button is available.
-        // If periodic refresh is desired in the future, re-enable the interval below.
-        // setInterval(() => {
-        //     if (currentPage === 'overview') {
-        //         loadDashboardData();
-        //     }
-        // }, 5 * 60 * 1000);
+            function loadIndividualBusinessUnitPage(unitCode) {
+                const container = document.getElementById(`${unitCode}-content`);
+                const businessUnitStats = processBusinessUnitData(clpData);
+                const stats = businessUnitStats[unitCode] || { total: 0, completed: 0, incomplete: 0, employees: [] };
+
+                container.innerHTML = createBusinessUnitDetailCard(unitCode, stats);
+
+                // Set up both supervisor and employee filters for this individual business unit
+                setupSupervisorFilter(unitCode, stats.employees);
+                setupEmployeeFilter(unitCode, stats.employees);
+            }
+
+            // -----------------------------------------------------------------------------
+            // Supervisor filter utilities and setup
+            // These functions enable searching and filtering by supervisor on each business unit page.
+
+            /**
+             * Parse supervisor email into first and last name and return an object.
+             * Handles emails in the form firstname.lastname@domain.com or similar.
+             * Splits on dots, underscores, or hyphens to be resilient to naming variations.
+             *
+             * @param {string} email - Supervisor email address
+             * @returns {{firstName: string, lastName: string, email: string}}
+             */
+            function parseSupervisorEmail(email) {
+                if (!email) {
+                    return { firstName: '', lastName: '', email: email || '' };
+                }
+                const atIndex = email.indexOf('@');
+                const userPart = atIndex >= 0 ? email.slice(0, atIndex) : email;
+                // Split on dots, underscores or hyphens to handle various formats
+                const nameParts = userPart.split(/[._-]/).filter(Boolean);
+                let firstName = '';
+                let lastName = '';
+                if (nameParts.length >= 2) {
+                    firstName = nameParts[0];
+                    lastName = nameParts.slice(1).join(' ');
+                } else if (nameParts.length === 1) {
+                    firstName = nameParts[0];
+                }
+                const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+                return {
+                    firstName: capitalize(firstName),
+                    lastName: capitalize(lastName),
+                    email: email
+                };
+            }
+
+            /**
+             * Format supervisor email into display string: "FirstName, LastName: email".
+             * Returns a human-friendly label used in the suggestions list.
+             *
+             * @param {string} email
+             * @returns {string}
+             */
+            function formatSupervisorDisplay(email) {
+                const parsed = parseSupervisorEmail(email || '');
+                return `${parsed.firstName}${parsed.lastName ? ', ' + parsed.lastName : ''}: ${parsed.email}`;
+            }
+
+            /**
+             * Parse an employee full name into first and last name for more intuitive searches.
+             * Supports names formatted as "LastName, FirstName" or "FirstName LastName".
+             *
+             * @param {string} name - Employee name as stored in the data
+             * @returns {{firstName: string, lastName: string, fullName: string}}
+             */
+            function parseEmployeeName(name) {
+                if (!name) {
+                    return { firstName: '', lastName: '', fullName: '' };
+                }
+                const trimmed = name.trim();
+                let firstName = '';
+                let lastName = '';
+                if (trimmed.includes(',')) {
+                    // Format: LastName, FirstName (potentially with middle names)
+                    const parts = trimmed.split(',');
+                    lastName = parts[0].trim();
+                    firstName = parts.slice(1).join(' ').trim();
+                } else {
+                    const parts = trimmed.split(/\s+/);
+                    if (parts.length >= 2) {
+                        firstName = parts[0];
+                        lastName = parts[parts.length - 1];
+                    } else {
+                        firstName = trimmed;
+                    }
+                }
+                return { firstName, lastName, fullName: trimmed };
+            }
+
+            /**
+             * Apply filtering logic for a business unit table using both supervisor and employee queries.
+             * When a query is empty, it is ignored.
+             *
+             * @param {string} unitCode - Business unit code
+             * @param {string} supervisorQuery - Query for supervisor search (lowercase)
+             * @param {string} employeeQuery - Query for employee search (lowercase)
+             */
+            function filterTable(unitCode, supervisorQuery, employeeQuery) {
+                const table = document.getElementById(`employee-table-${unitCode}`);
+                if (!table) return;
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+                const rows = tbody.getElementsByTagName('tr');
+                let visibleCount = 0;
+                const supQuery = supervisorQuery ? supervisorQuery.toLowerCase() : '';
+                const empQuery = employeeQuery ? employeeQuery.toLowerCase() : '';
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    if (!cells || cells.length < 2) continue;
+                    const empName = (cells[0].textContent || '').trim();
+                    const supEmail = (cells[1].textContent || '').trim();
+                    let supMatch = true;
+                    let empMatch = true;
+                    if (supQuery) {
+                        const supLower = supEmail.toLowerCase();
+                        const supParsed = parseSupervisorEmail(supEmail);
+                        supMatch = supLower.includes(supQuery) ||
+                            (supParsed.firstName && supParsed.firstName.toLowerCase().includes(supQuery)) ||
+                            (supParsed.lastName && supParsed.lastName.toLowerCase().includes(supQuery)) ||
+                            (`${supParsed.firstName} ${supParsed.lastName}`.toLowerCase().includes(supQuery));
+                    }
+                    if (empQuery) {
+                        const empLower = empName.toLowerCase();
+                        const empParsed = parseEmployeeName(empName);
+                        empMatch = empLower.includes(empQuery) ||
+                            (empParsed.firstName && empParsed.firstName.toLowerCase().includes(empQuery)) ||
+                            (empParsed.lastName && empParsed.lastName.toLowerCase().includes(empQuery)) ||
+                            (`${empParsed.firstName} ${empParsed.lastName}`.toLowerCase().includes(empQuery));
+                    }
+                    if (supMatch && empMatch) {
+                        rows[i].style.display = '';
+                        visibleCount++;
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+                // Update table info count text if available
+                const card = document.getElementById(`business-unit-${unitCode}`);
+                if (card) {
+                    const tableInfoCount = card.querySelector('.table-info-count');
+                    if (tableInfoCount) {
+                        const total = rows.length;
+                        if (supQuery || empQuery) {
+                            tableInfoCount.textContent = `Showing ${visibleCount} of ${total} employees`;
+                        } else {
+                            tableInfoCount.textContent = `Showing all ${total} employees (scroll for more)`;
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Convenience function to apply filtering based on the current values of the search inputs.
+             * This reads the current input values and invokes filterTable.
+             *
+             * @param {string} unitCode - Business unit code
+             */
+            function applyFilter(unitCode) {
+                const supInput = document.getElementById(`supervisor-search-${unitCode}`);
+                const empInput = document.getElementById(`employee-search-${unitCode}`);
+                const supQuery = supInput ? supInput.value.trim() : '';
+                const empQuery = empInput ? empInput.value.trim() : '';
+                filterTable(unitCode, supQuery, empQuery);
+            }
+
+            /**
+             * Filter the employees table by supervisor email.
+             * Shows only rows matching the selected supervisor or all rows if no supervisor is selected.
+             * Updates the "Showing" count in the table info element accordingly.
+             *
+             * @param {string} unitCode - Business unit code
+             * @param {string} selectedEmail - Supervisor email to filter by, or empty string to show all
+             */
+            function filterTableBySupervisor(unitCode, selectedEmail) {
+                const table = document.getElementById(`employee-table-${unitCode}`);
+                if (!table) return;
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+                const rows = tbody.getElementsByTagName('tr');
+                let visibleCount = 0;
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    if (!cells || cells.length < 2) continue;
+                    const supervisorEmail = (cells[1].textContent || '').trim();
+                    if (!selectedEmail || supervisorEmail.toLowerCase() === selectedEmail.toLowerCase()) {
+                        rows[i].style.display = '';
+                        visibleCount++;
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+                // Update table info count text if available
+                const card = document.getElementById(`business-unit-${unitCode}`);
+                if (card) {
+                    const tableInfoCount = card.querySelector('.table-info-count');
+                    if (tableInfoCount) {
+                        const total = rows.length;
+                        if (selectedEmail) {
+                            tableInfoCount.textContent = `Showing ${visibleCount} of ${total} employees`;
+                        } else {
+                            tableInfoCount.textContent = `Showing all ${total} employees (scroll for more)`;
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Set up supervisor search and filter functionality for a specific business unit.
+             * Adds event listeners to the search input, populates suggestions, and filters the table.
+             *
+             * @param {string} unitCode - Business unit code
+             * @param {Array<Object>} employees - Array of employee objects belonging to the unit
+             */
+            function setupSupervisorFilter(unitCode, employees) {
+                const input = document.getElementById(`supervisor-search-${unitCode}`);
+                const suggestionsContainer = document.getElementById(`supervisor-suggestions-${unitCode}`);
+                if (!input || !suggestionsContainer) {
+                    return;
+                }
+                // Build list of unique supervisors with parsed names
+                const supervisorMap = {};
+                employees.forEach(emp => {
+                    const supEmail = (emp.supervisor || '').trim();
+                    if (supEmail && !supervisorMap[supEmail]) {
+                        supervisorMap[supEmail] = parseSupervisorEmail(supEmail);
+                    }
+                });
+                const supervisorList = Object.values(supervisorMap);
+
+                // Helper to update suggestions based on the current query
+                function updateSuggestions() {
+                    const query = (input.value || '').trim().toLowerCase();
+                    suggestionsContainer.innerHTML = '';
+                    if (!query) {
+                        suggestionsContainer.style.display = 'none';
+                        // Clear filter and show all employees when query is empty
+                        applyFilter(unitCode);
+                        return;
+                    }
+                    // Filter supervisors by first name, last name, or email
+                    const matches = supervisorList.filter(item => {
+                        return item.firstName.toLowerCase().includes(query) ||
+                            item.lastName.toLowerCase().includes(query) ||
+                            item.email.toLowerCase().includes(query);
+                    }).slice(0, 10); // Limit to 10 suggestions
+                    if (matches.length === 0) {
+                        suggestionsContainer.style.display = 'none';
+                        // Show all employees if no match found
+                        applyFilter(unitCode);
+                        return;
+                    }
+                    matches.forEach(item => {
+                        const displayText = `${item.firstName}${item.lastName ? ', ' + item.lastName : ''}: ${item.email}`;
+                        const div = document.createElement('div');
+                        div.className = 'supervisor-suggestion-item';
+                        div.textContent = displayText;
+                        div.setAttribute('data-email', item.email);
+                        // Click handler for suggestion item
+                        div.addEventListener('click', () => {
+                            input.value = displayText;
+                            suggestionsContainer.style.display = 'none';
+                            // Set the input to the selected suggestion and apply combined filter
+                            applyFilter(unitCode);
+                        });
+                        suggestionsContainer.appendChild(div);
+                    });
+                    suggestionsContainer.style.display = 'block';
+                }
+
+                // Listen to input events on the search field
+                input.addEventListener('input', () => {
+                    updateSuggestions();
+                    // Apply combined filter after each input change
+                    applyFilter(unitCode);
+                });
+                // Hide suggestions when clicking outside the search area
+                document.addEventListener('click', function (event) {
+                    if (!suggestionsContainer.contains(event.target) && event.target !== input) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
+
+            /**
+             * Set up employee search and filter functionality for a specific business unit.
+             * Adds event listeners to the search input, populates suggestions, and applies combined filtering.
+             *
+             * @param {string} unitCode - Business unit code
+             * @param {Array<Object>} employees - Array of employee objects belonging to the unit
+             */
+            function setupEmployeeFilter(unitCode, employees) {
+                const input = document.getElementById(`employee-search-${unitCode}`);
+                const suggestionsContainer = document.getElementById(`employee-suggestions-${unitCode}`);
+                if (!input || !suggestionsContainer) {
+                    return;
+                }
+                // Build list of unique employees with parsed names
+                const employeeMap = {};
+                employees.forEach(emp => {
+                    const empName = (emp.employee || '').trim();
+                    if (empName && !employeeMap[empName]) {
+                        employeeMap[empName] = parseEmployeeName(empName);
+                    }
+                });
+                const employeeList = Object.keys(employeeMap).map(name => ({
+                    fullName: name,
+                    firstName: employeeMap[name].firstName,
+                    lastName: employeeMap[name].lastName
+                }));
+
+                // Helper to update suggestions based on the current query
+                function updateSuggestions() {
+                    const query = (input.value || '').trim().toLowerCase();
+                    suggestionsContainer.innerHTML = '';
+                    if (!query) {
+                        suggestionsContainer.style.display = 'none';
+                        // Apply filter even if query is empty to reset other filters
+                        applyFilter(unitCode);
+                        return;
+                    }
+                    // Filter employees by first name, last name, or full name
+                    const matches = employeeList.filter(item => {
+                        return item.fullName.toLowerCase().includes(query) ||
+                            (item.firstName && item.firstName.toLowerCase().includes(query)) ||
+                            (item.lastName && item.lastName.toLowerCase().includes(query));
+                    }).slice(0, 10); // limit to 10 suggestions
+                    if (matches.length === 0) {
+                        suggestionsContainer.style.display = 'none';
+                        applyFilter(unitCode);
+                        return;
+                    }
+                    matches.forEach(item => {
+                        const displayText = item.fullName;
+                        const div = document.createElement('div');
+                        div.className = 'employee-suggestion-item';
+                        div.textContent = displayText;
+                        // Click handler for suggestion item
+                        div.addEventListener('click', () => {
+                            input.value = displayText;
+                            suggestionsContainer.style.display = 'none';
+                            applyFilter(unitCode);
+                        });
+                        suggestionsContainer.appendChild(div);
+                    });
+                    suggestionsContainer.style.display = 'block';
+                }
+
+                // Listen to input events on the search field
+                input.addEventListener('input', () => {
+                    updateSuggestions();
+                    applyFilter(unitCode);
+                });
+                // Hide suggestions when clicking outside the search area
+                document.addEventListener('click', function (event) {
+                    if (!suggestionsContainer.contains(event.target) && event.target !== input) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
 
 
 
 
-  </script>
-</body>
+            // Main data loading
+            function showLoading(show) {
+                const loading = document.getElementById('loading');
+                const grid = document.getElementById('businessUnitsGrid');
+
+                if (show) {
+                    loading.style.display = 'block';
+                    grid.style.display = 'none';
+                } else {
+                    loading.style.display = 'none';
+                    grid.style.display = 'grid';
+                }
+            }
+
+
+
+
+            async function loadDashboardData() {
+                showLoading(true);
+
+                try {
+                    console.log('=== LOADING DASHBOARD DATA ===');
+
+                    clpData = await new Promise((resolve, reject) => {
+                        google.script.run
+                            .withSuccessHandler(resolve)
+                            .withFailureHandler(reject)
+                            .getDashboardData();
+                    });
+
+                    console.log('Data received from Google Apps Script:', clpData);
+                    console.log('Number of records:', clpData ? clpData.length : 0);
+
+                    if (clpData && clpData.length > 0) {
+                        console.log('First 10 records from Google Apps Script with range values:');
+                        clpData.slice(0, 10).forEach((record, index) => {
+                            console.log(`Record ${index}: employee="${record.employee}", orgCode="${record.orgCode}", range="${record.range}", percentEarned="${record.percentEarned}"`);
+                        });
+
+                        // Show all unique range values found in the actual data
+                        const uniqueRanges = [...new Set(clpData.map(emp => emp.range))];
+                        console.log('ALL UNIQUE RANGE VALUES IN ACTUAL DATA:', uniqueRanges);
+
+                        // Count each range value
+                        const rangeCounts = {};
+                        clpData.forEach(emp => {
+                            const range = emp.range;
+                            rangeCounts[range] = (rangeCounts[range] || 0) + 1;
+                        });
+                        console.log('RANGE VALUE COUNTS:', rangeCounts);
+                    }
+
+                    if (!clpData || clpData.length === 0) {
+                        console.log('No data from Google Apps Script, using sample data');
+                        clpData = generateSampleData();
+                        console.log('Generated sample data, first 3 records:');
+                        clpData.slice(0, 3).forEach((record, index) => {
+                            console.log(`Sample Record ${index}:`, record);
+                        });
+                    }
+
+                    const businessUnitStats = processBusinessUnitData(clpData);
+                    updateOverallStats(clpData);
+                    renderBusinessUnits(businessUnitStats);
+
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                    console.log('Falling back to sample data due to error');
+                    clpData = generateSampleData();
+
+                    const businessUnitStats = processBusinessUnitData(clpData);
+                    updateOverallStats(clpData);
+                    renderBusinessUnits(businessUnitStats);
+
+                    setTimeout(() => {
+                        alert('Error loading live data. Showing sample data. Please check if processLatestCLPDataRobust() has been run.');
+                    }, 1000);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+
+
+
+            // Note: Auto-refresh disabled to prevent unnecessary reloads. Manual refresh via the button is available.
+            // If periodic refresh is desired in the future, re-enable the interval below.
+            // setInterval(() => {
+            //     if (currentPage === 'overview') {
+            //         loadDashboardData();
+            //     }
+            // }, 5 * 60 * 1000);
+
+
+
+
+        </script>
+    </body>
 
 
 
 
 </html>
-
-
