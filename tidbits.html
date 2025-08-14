@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Company Memos & Announcements</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .memo-container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .memo-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border-left: 6px solid #0081a7;
+    }
+
+    .memo-card:hover {
+      transform: scale(1.01);
+    }
+
+    .memo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .memo-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .memo-date {
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    .memo-meta {
+      margin: 5px 0 10px;
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    .memo-body {
+      display: none;
+      padding-top: 10px;
+      border-top: 1px dashed #ccc;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .memo-card.new {
+      background: #e0f7fa;
+      border-left-color: #00bcd4;
+    }
+  </style>
+</head>
+<body>
+  <h1>📢 Daily Memos & Announcements</h1>
+  <div class="memo-container" id="memoContainer">
+    <!-- Memos will be injected here -->
+  </div>
+
+  <script>
+    // Replace this with google.script.run function call in GAS
+    function fetchMemos() {
+      google.script.run.withSuccessHandler(renderMemos).getMemosFromSheet();
+    }
+
+    function renderMemos(data) {
+      const container = document.getElementById('memoContainer');
+      container.innerHTML = '';
+      const today = new Date().toDateString();
+
+      data.forEach(memo => {
+        const card = document.createElement('div');
+        card.className = 'memo-card';
+        if (new Date(memo.dateSubmitted).toDateString() === today) {
+          card.classList.add('new');
+        }
+
+        card.innerHTML = `
+          <div class="memo-header">
+            <div class="memo-title">BU: ${memo.bu}</div>
+            <div class="memo-date">🗓 ${memo.dateSubmitted}</div>
+          </div>
+          <div class="memo-meta">Posted by: ${memo.pointOfContact}</div>
+          <div class="memo-body">${memo.weeklyTidbit}</div>
+        `;
+
+        card.addEventListener('click', () => {
+          const body = card.querySelector('.memo-body');
+          body.style.display = body.style.display === 'block' ? 'none' : 'block';
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    fetchMemos();
+  </script>
+</body>
+</html>
