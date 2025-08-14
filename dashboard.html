@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLP Dashboard</title>
+  <?!= include('style/base') ?>
+</head>
+
+
+
+
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+        <div class="sidebar-logo">CLP Portal</div>
+        <div class="sidebar-subtitle">Training Dashboard</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-item active" id="nav-overview">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Overview</span>
+        </div>
+        <div class="nav-item" id="nav-business-units">
+          <span class="nav-icon">🏢</span>
+          <span class="nav-text">Business Units</span>
+          <span class="nav-expand">▶</span>
+        </div>
+        <div class="nav-submenu" id="business-units-submenu">
+          <div class="nav-subitem" id="nav-QF2">SOS</div>
+          <div class="nav-subitem" id="nav-QFA">Army</div>
+          <div class="nav-subitem" id="nav-QFB">AF/N/SF</div>
+          <div class="nav-subitem" id="nav-QFC">Civilian</div>
+          <div class="nav-subitem" id="nav-QFE">Defense</div>
+        </div>
+      </div>
+    </nav>
+
+
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Overview Page -->
+      <div class="page-content active" id="page-overview">
+        <div class="page-header">
+          <h1 class="page-title">Overview Dashboard</h1>
+          <p class="page-subtitle">Business Unit Completion Summary</p>
+        </div>
+
+
+
+
+        <div class="container">
+          <div class="dashboard-content">
+            <div class="stats-overview" id="statsOverview">
+              <div class="stat-card">
+                <div class="stat-number" id="totalEmployees">0</div>
+                <div class="stat-label">Total Employees</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" id="completedCount">0</div>
+                <div class="stat-label">Completed</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" id="incompleteCount">0</div>
+                <div class="stat-label">Incomplete</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" id="completionRate">0%</div>
+                <div class="stat-label">Completion Rate</div>
+              </div>
+            </div>
+
+
+
+
+            <div class="loading" id="loading">
+              <div class="spinner"></div>
+              <p>Loading CLP data...</p>
+            </div>
+
+
+
+
+            <div class="business-units-grid" id="businessUnitsGrid">
+              <!-- Business unit cards will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+
+      <!-- Business Units Page -->
+      <div class="page-content" id="page-business-units">
+        <div class="page-header">
+          <h1 class="page-title">Business Units</h1>
+          <p class="page-subtitle">Individual Business Unit Analytics</p>
+        </div>
+
+
+
+
+        <div class="loading" id="loading-business-units">
+          <div class="spinner"></div>
+          <p>Loading business unit details...</p>
+        </div>
+
+
+
+
+        <div id="businessUnitsDetailContainer">
+          <!-- Business unit detail cards will be populated by JavaScript -->
+        </div>
+      </div>
+
+
+
+
+      <!-- Individual Business Unit Pages -->
+      <div class="page-content" id="page-QF2">
+        <div class="page-header">
+        <h1 class="page-title">SOS Business Unit</h1>
+          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+        </div>
+        <div id="QF2-content"></div>
+      </div>
+
+
+
+
+      <div class="page-content" id="page-QFA">
+        <div class="page-header">
+          <h1 class="page-title">Army Business Unit</h1>
+          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+        </div>
+        <div id="QFA-content"></div>
+      </div>
+
+
+
+
+      <div class="page-content" id="page-QFB">
+        <div class="page-header">
+          <h1 class="page-title">AF/N/SF Business Unit</h1>
+          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+        </div>
+        <div id="QFB-content"></div>
+      </div>
+
+
+
+
+      <div class="page-content" id="page-QFC">
+        <div class="page-header">
+          <h1 class="page-title">Civilian Business Unit</h1>
+          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+        </div>
+        <div id="QFC-content"></div>
+      </div>
+
+
+
+
+
+
+
+
+      <div class="page-content" id="page-QFE">
+        <div class="page-header">
+          <h1 class="page-title">Defense Business Unit</h1>
+          <p class="page-subtitle">Detailed Analytics & Employee Data</p>
+        </div>
+        <div id="QFE-content"></div>
+      </div>
+    </main>
+  </div>
+
+
+
+
+  <button class="refresh-btn" id="refreshBtn" title="Refresh Data">
+        ↻
+    </button>
+
+
+
+
+  <script>
+    // Global variables
+        let clpData = [];
+        let currentPage = 'overview';
+        // List of business unit codes for navigation and stats. QF1 is merged into QF2 (SOS) and QFD is deprecated.
+        const businessUnits = ['QF2', 'QFA', 'QFB', 'QFC', 'QFE'];
+
+        // Mapping of business unit codes to their human‑friendly names. Used for display throughout the UI.
+        const businessUnitDisplayNames = {
+            QF2: 'SOS',
+            QFA: 'Army',
+            QFB: 'AF/N/SF',
+            QFC: 'Civilian',
+            QFE: 'Defense'
+        };
+
+
+
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            initializeBusinessUnitNavigation();
+            loadDashboardData();
+        });
+
+
+
+
+        // Event Listeners
+        function initializeEventListeners() {
+            // Sidebar toggle - make sure it works in both expanded and collapsed states
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            sidebarToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('collapsed');
+                console.log('Sidebar toggled, collapsed:', sidebar.classList.contains('collapsed'));
+            });
+            
+            // Overview navigation
+            document.getElementById('nav-overview').addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('overview');
+            });
+            
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                refreshCurrentPage();
+            });
+        }
+
+
+
+
+        // Enhanced Business Units Navigation
+        function initializeBusinessUnitNavigation() {
+            // Business Units main navigation with expansion
+            document.getElementById('nav-business-units').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleBusinessUnitsSubmenu();
+            });
+            
+            // Individual business unit navigation
+            businessUnits.forEach(unit => {
+                const navElement = document.getElementById(`nav-${unit}`);
+                if (navElement) {
+                    navElement.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Remove active class from all subitems
+                        document.querySelectorAll('.nav-subitem').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        // Add active class to clicked item
+                        this.classList.add('active');
+                        
+                        // Show the business unit page
+                        showBusinessUnitPage(unit);
+                    });
+                }
+            });
+        }
+
+
+
+
+        // Enhanced Business Units Toggle Function
+        function toggleBusinessUnitsSubmenu() {
+            const submenu = document.getElementById('business-units-submenu');
+            const navItem = document.getElementById('nav-business-units');
+            const expandIcon = navItem.querySelector('.nav-expand');
+            
+            // Toggle the expanded class on both elements
+            const isExpanding = !submenu.classList.contains('expanded');
+            
+            if (isExpanding) {
+                // Expanding
+                submenu.classList.add('expanded');
+                navItem.classList.add('expanded');
+                
+                // Show the business units overview page
+                showPage('business-units');
+                
+                // Update expand icon
+                if (expandIcon) {
+                    expandIcon.textContent = '▼';
+                }
+                
+                // Add smooth animation class
+                submenu.classList.add('expanding');
+                setTimeout(() => {
+                    submenu.classList.remove('expanding');
+                }, 300);
+                
+            } else {
+                // Collapsing
+                submenu.classList.add('collapsing');
+                
+                setTimeout(() => {
+                    submenu.classList.remove('expanded', 'collapsing');
+                    navItem.classList.remove('expanded');
+                    
+                    // Update expand icon
+                    if (expandIcon) {
+                        expandIcon.textContent = '▶';
+                    }
+                }, 300);
+                
+                // If currently on business units page, go back to overview
+                if (currentPage === 'business-units' || businessUnits.includes(currentPage)) {
+                    showPage('overview');
+                }
+            }
+        }
+
+
+
+
+        // Navigation functions
+        function showPage(pageId) {
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.nav-subitem').forEach(item => item.classList.remove('active'));
+            
+            if (pageId === 'overview') {
+                document.getElementById('nav-overview').classList.add('active');
+            } else if (pageId === 'business-units') {
+                document.getElementById('nav-business-units').classList.add('active');
+                // Ensure submenu is expanded when showing business units page
+                const submenu = document.getElementById('business-units-submenu');
+                const navItem = document.getElementById('nav-business-units');
+                const expandIcon = navItem.querySelector('.nav-expand');
+                if (!submenu.classList.contains('expanded')) {
+                    submenu.classList.add('expanded');
+                    navItem.classList.add('expanded');
+                    if (expandIcon) {
+                        expandIcon.textContent = '▼';
+                    }
+                }
+            } else if (businessUnits.includes(pageId)) {
+                document.getElementById('nav-business-units').classList.add('active');
+                document.getElementById(`nav-${pageId}`).classList.add('active');
+                // Ensure submenu is expanded when showing individual business unit
+                const submenu = document.getElementById('business-units-submenu');
+                const navItem = document.getElementById('nav-business-units');
+                const expandIcon = navItem.querySelector('.nav-expand');
+                if (!submenu.classList.contains('expanded')) {
+                    submenu.classList.add('expanded');
+                    navItem.classList.add('expanded');
+                    if (expandIcon) {
+                        expandIcon.textContent = '▼';
+                    }
+                }
+            }
+            
+            // Update page content
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            
+            currentPage = pageId;
+            
+            // Load page-specific data
+            if (pageId === 'business-units') {
+                loadBusinessUnitsPage();
+            } else if (businessUnits.includes(pageId)) {
+                loadIndividualBusinessUnitPage(pageId);
+            }
+        }
+
+
+
+
+        function showBusinessUnitPage(unitCode) {
+            showPage(unitCode);
+        }
+
+
+
+
+        function refreshCurrentPage() {
+            if (currentPage === 'overview') {
+                loadDashboardData();
+            } else if (currentPage === 'business-units') {
+                loadBusinessUnitsPage();
+            } else if (businessUnits.includes(currentPage)) {
+                loadIndividualBusinessUnitPage(currentPage);
+            }
+        }
+
+
+
+
+        // Utility functions
+        function extractBusinessUnit(orgCode) {
+            if (!orgCode || typeof orgCode !== 'string') return 'Unknown';
+            const code = orgCode.toUpperCase().trim();
+            // Defence subcodes should be grouped with the Army
+            if (code.startsWith('QFEE') || code.startsWith('QFEEB') || code.startsWith('QFEEC')) {
+                return 'QFA';
+            }
+            // Combine QF1 and QF2 into a single SOS group
+            if (code.startsWith('QF1')) {
+                return 'QF2';
+            }
+            const prefix = code.substring(0, 3);
+            // Ignore deprecated QFD entries
+            if (prefix === 'QFD') {
+                return 'Unknown';
+            }
+            return prefix;
+        }
+
+
+
+
+        function isComplete(remaining) {
+            return remaining < 1;
+        }
+
+
+
+
+        // Sample data generation
+        function generateSampleData() {
+            const sampleData = [];
+            const rangeValues = ['100%', '100%', '100%', '100%', '100%', '0-49%', '0-49%', '0-49%', '50-99%']; // Based on your actual data
+            
+            for (let i = 0; i < 150; i++) {
+                const businessUnit = businessUnits[Math.floor(Math.random() * businessUnits.length)];
+                const remaining = Math.random() * 10;
+                const rangeIndex = i % rangeValues.length; // Cycle through your actual range values
+                
+                sampleData.push({
+                    employee: `Employee ${i + 1}`,
+                    orgCode: businessUnit + (Math.floor(Math.random() * 9000) + 1000),
+                    supervisor: `Supervisor ${Math.floor(i / 10) + 1}`,
+                    range: rangeValues[rangeIndex], // Use your actual range format
+                    percentEarned: Math.floor(Math.random() * 101),
+                    required: Math.floor(Math.random() * 20) + 5,
+                    earned: Math.floor(Math.random() * 20),
+                    remaining: remaining,
+                    fcp: Math.random() > 0.7 ? 'Yes' : 'No',
+                    ppm: Math.random() > 0.6 ? 'Yes' : 'No',
+                    cor3: Math.random() > 0.8 ? 'Yes' : 'No',
+                    cor2: Math.random() > 0.5 ? 'Yes' : 'No',
+                    cor1: Math.random() > 0.4 ? 'Yes' : 'No'
+                });
+            }
+            
+            console.log('Generated sample data with range distribution:');
+            const sampleRangeCount = {};
+            sampleData.forEach(emp => {
+                sampleRangeCount[emp.range] = (sampleRangeCount[emp.range] || 0) + 1;
+            });
+            console.log('Sample range counts:', sampleRangeCount);
+            
+            return sampleData;
+        }
+
+
+
+
+        // Data processing functions
+        function processBusinessUnitData(data) {
+            const businessUnitStats = {};
+            
+            businessUnits.forEach(unit => {
+                businessUnitStats[unit] = {
+                    total: 0,
+                    completed: 0,
+                    incomplete: 0,
+                    employees: []
+                };
+            });
+
+
+
+
+            data.forEach(record => {
+                const businessUnit = extractBusinessUnit(record.orgCode);
+                
+                if (businessUnitStats[businessUnit]) {
+                    businessUnitStats[businessUnit].total++;
+                    businessUnitStats[businessUnit].employees.push(record);
+                    
+                    if (isComplete(record.remaining)) {
+                        businessUnitStats[businessUnit].completed++;
+                    } else {
+                        businessUnitStats[businessUnit].incomplete++;
+                    }
+                }
+            });
+
+
+
+
+            return businessUnitStats;
+        }
+
+
+
+
+        // Visualization functions
+        function createDonutChart(percentage, label) {
+            const radius = 55;
+            const circumference = 2 * Math.PI * radius;
+            const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+            
+            return `
+                <div class="donut-chart">
+                    <svg viewBox="0 0 120 120">
+                        <circle class="donut-segment donut-background" cx="60" cy="60" r="${radius}"></circle>
+                        <circle class="donut-segment donut-complete" cx="60" cy="60" r="${radius}" 
+                                stroke-dasharray="${strokeDasharray}" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="donut-center">
+                        <span class="donut-percentage">${percentage}%</span>
+                        <span class="donut-label">${label}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+
+
+
+        function createRangeBarChart(rangeData) {
+            const total = Object.values(rangeData).reduce((sum, count) => sum + count, 0);
+            
+            return `
+                <div class="bar-chart">
+                    <div class="bar-item">
+                        <div class="bar-label">0%</div>
+                        <div class="bar-container">
+                            <div class="bar-fill range-0" style="width: ${total > 0 ? (rangeData['0'] / total * 100) : 0}%"></div>
+                        </div>
+                        <div class="bar-value">${rangeData['0'] || 0}</div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">0-49%</div>
+                        <div class="bar-container">
+                            <div class="bar-fill range-low" style="width: ${total > 0 ? (rangeData['1-49'] / total * 100) : 0}%"></div>
+                        </div>
+                        <div class="bar-value">${rangeData['1-49'] || 0}</div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">50-99%</div>
+                        <div class="bar-container">
+                            <div class="bar-fill range-medium" style="width: ${total > 0 ? (rangeData['50-99'] / total * 100) : 0}%"></div>
+                        </div>
+                        <div class="bar-value">${rangeData['50-99'] || 0}</div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">100%</div>
+                        <div class="bar-container">
+                            <div class="bar-fill range-high" style="width: ${total > 0 ? (rangeData['100'] / total * 100) : 0}%"></div>
+                        </div>
+                        <div class="bar-value">${rangeData['100'] || 0}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+
+
+        function analyzeRangeData(employees) {
+            const rangeData = {
+                '0': 0,
+                '1-49': 0,
+                '50-99': 0,
+                '100': 0
+            };
+
+
+
+
+            console.log('=== RANGE DATA ANALYSIS DEBUG ===');
+            console.log('Total employees to analyze:', employees.length);
+            
+            // Let's see what unique range values we have
+            const uniqueRanges = new Set();
+            employees.forEach(emp => {
+                uniqueRanges.add(emp.range);
+            });
+            console.log('Unique range values found:', Array.from(uniqueRanges));
+            console.log('Unique range values details:', Array.from(uniqueRanges).map(val => `"${val}" (type: ${typeof val}, length: ${val ? val.toString().length : 'null'})`));
+            
+            // Check for 100% specifically
+            const has100Percent = employees.some(emp => emp.range === '100%');
+            const has100PercentLoose = employees.some(emp => emp.range && emp.range.toString().includes('100'));
+            console.log('Direct check - any exact "100%"?', has100Percent);
+            console.log('Direct check - any containing "100"?', has100PercentLoose);
+            
+            // Find first 100% entry for detailed analysis
+            const first100 = employees.find(emp => emp.range && emp.range.toString().includes('100'));
+            if (first100) {
+                console.log('First 100% entry found:', first100);
+                console.log('Range value detailed analysis:');
+                console.log('  Raw value:', first100.range);
+                console.log('  Type:', typeof first100.range);
+                console.log('  Length:', first100.range.toString().length);
+                console.log('  Char codes:', Array.from(first100.range.toString()).map(char => `${char}(${char.charCodeAt(0)})`));
+                console.log('  Equals "100%"?', first100.range === '100%');
+                console.log('  Equals "100%" after trim?', first100.range.toString().trim() === '100%');
+            }
+            
+            employees.forEach((emp, index) => {
+                const rangeValue = emp.range;
+                
+                // Log first 15 for debugging
+                if (index < 15) {
+                    console.log(`Employee ${index}: range="${rangeValue}" (type: ${typeof rangeValue})`);
+                }
+                
+                let category = 'unknown';
+                
+                // Handle null/undefined/empty
+                if (rangeValue === null || rangeValue === undefined || rangeValue === '') {
+                    rangeData['0']++;
+                    category = '0 (empty)';
+                } else {
+                    // Convert to string and clean up
+                    const rangeStr = rangeValue.toString().trim();
+                    
+                    // Log character analysis for first few 100% entries
+                    if (index < 15 && rangeStr.includes('100')) {
+                        console.log(`  Character analysis for "${rangeStr}":`, Array.from(rangeStr).map(char => `${char}(${char.charCodeAt(0)})`));
+                    }
+                    
+                    // EXACT string matching with detailed logging
+                    if (rangeStr === '100%') {
+                        rangeData['100']++;
+                        category = '100%';
+                        if (index < 5) console.log(`  MATCHED 100% for employee ${index}`);
+                    } else if (rangeStr === '0-49%') {
+                        rangeData['1-49']++;
+                        category = '0-49%';
+                    } else if (rangeStr === '50-99%') {
+                        rangeData['50-99']++;
+                        category = '50-99%';
+                    } else if (rangeStr === '0%') {
+                        rangeData['0']++;
+                        category = '0%';
+                    } else if (rangeStr === '0 CLPS') {
+                        rangeData['0']++;
+                        category = '0% (0 CLPS)';
+                    } else {
+                        // Try alternative matching for 100%
+                        if (rangeStr.includes('100') && rangeStr.includes('%')) {
+                            rangeData['100']++;
+                            category = '100% (loose match)';
+                            if (index < 5) console.log(`  LOOSE MATCHED 100% for employee ${index}: "${rangeStr}"`);
+                        } else {
+                            if (index < 15) {
+                                console.log(`UNMATCHED STRING: "${rangeStr}" - This will be categorized as 0% (unmatched)`);
+                            }
+                            rangeData['0']++;
+                            category = '0% (unmatched: "' + rangeStr + '")';
+                        }
+                    }
+                }
+                
+                // Log categorization for first 15 employees
+                if (index < 15) {
+                    console.log(`  -> ${category}`);
+                }
+            });
+
+
+
+
+            console.log('=== FINAL RANGE DISTRIBUTION ===');
+            console.log('0%:', rangeData['0']);
+            console.log('0-49%:', rangeData['1-49']);
+            console.log('50-99%:', rangeData['50-99']);
+            console.log('100%:', rangeData['100']);
+            console.log('Total classified:', Object.values(rangeData).reduce((a, b) => a + b, 0));
+            console.log('=== CRITICAL: 100% count is', rangeData['100'], '- if this is 0 but you expect 100% entries, the data mismatch is confirmed ===');
+            console.log('================================');
+            
+            return rangeData;
+        }
+
+
+
+
+        function createBusinessUnitVisualization(unitCode, stats) {
+            const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+            const rangeData = analyzeRangeData(stats.employees);
+            
+            const employeesWithCLPs = stats.employees.filter(emp => emp.required > 0).length;
+            const avgRequired = stats.employees.length > 0 ? 
+                (stats.employees.reduce((sum, emp) => sum + (emp.required || 0), 0) / stats.employees.length).toFixed(1) : 0;
+            const avgEarned = stats.employees.length > 0 ? 
+                (stats.employees.reduce((sum, emp) => sum + (emp.earned || 0), 0) / stats.employees.length).toFixed(1) : 0;
+
+
+
+
+            const displayName = businessUnitDisplayNames[unitCode] || unitCode;
+            return `
+                <div class="chart-container">
+                    <h3 class="chart-title">${displayName} - Detailed Analytics</h3>
+                    
+                    <!-- Key Statistics -->
+                    <div class="viz-stats-grid">
+                        <div class="viz-stat-card">
+                            <div class="viz-stat-value">${displayName}</div>
+                            <div class="viz-stat-label">Business Unit</div>
+                        </div>
+                        <div class="viz-stat-card">
+                            <div class="viz-stat-value">${employeesWithCLPs}</div>
+                            <div class="viz-stat-label">Employees with CLPs</div>
+                        </div>
+                        <div class="viz-stat-card">
+                            <div class="viz-stat-value">${completionRate}%</div>
+                            <div class="viz-stat-label">CLP Completion</div>
+                        </div>
+                        <div class="viz-stat-card">
+                            <div class="viz-stat-value">${avgRequired}</div>
+                            <div class="viz-stat-label">Avg Required</div>
+                        </div>
+                        <div class="viz-stat-card">
+                            <div class="viz-stat-value">${avgEarned}</div>
+                            <div class="viz-stat-label">Avg Earned</div>
+                        </div>
+                    </div>
+
+
+
+
+                    <!-- Charts Grid -->
+                    <div class="chart-grid">
+                        <!-- Completion Donut Chart -->
+                        <div class="chart-item">
+                            <h3>CLP Completion Status</h3>
+                            ${createDonutChart(completionRate, 'Complete')}
+                            <div class="chart-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color complete"></div>
+                                    <span>Complete (${stats.completed})</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color incomplete"></div>
+                                    <span>Incomplete (${stats.incomplete})</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+
+                        <!-- Range Distribution Bar Chart -->
+                        <div class="chart-item">
+                            <h3>CLP Progress Distribution</h3>
+                            ${createRangeBarChart(rangeData)}
+                            <div style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--brand-mediumGrey);">
+                                Employee count by completion percentage ranges
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+
+
+        // Overview page functions
+        function updateOverallStats(data) {
+            const totalEmployees = data.length;
+            const completedCount = data.filter(record => isComplete(record.remaining)).length;
+            const incompleteCount = totalEmployees - completedCount;
+            const completionRate = totalEmployees > 0 ? Math.round((completedCount / totalEmployees) * 100) : 0;
+
+
+
+
+            document.getElementById('totalEmployees').textContent = totalEmployees;
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('incompleteCount').textContent = incompleteCount;
+            document.getElementById('completionRate').textContent = completionRate + '%';
+        }
+
+
+
+
+        function createBusinessUnitCard(unitCode, stats) {
+            const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+            const isOverallComplete = completionRate === 100;
+            
+            const displayName = businessUnitDisplayNames[unitCode] || unitCode;
+            return `
+                <div class="business-unit-card" onclick="showBusinessUnitPage('${unitCode}')">
+                    <div class="business-unit-header">
+                        <div class="business-unit-code">${displayName}</div>
+                        <div class="status-badge ${isOverallComplete ? 'status-complete' : 'status-incomplete'}">
+                            ${isOverallComplete ? 'Complete' : 'Incomplete'}
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${completionRate}%"></div>
+                    </div>
+                    
+                    <div class="business-unit-stats">
+                        <div class="unit-stat">
+                            <div class="unit-stat-number">${stats.total}</div>
+                            <div class="unit-stat-label">Total</div>
+                        </div>
+                        <div class="unit-stat">
+                            <div class="unit-stat-number">${stats.completed}</div>
+                            <div class="unit-stat-label">Complete</div>
+                        </div>
+                        <div class="unit-stat">
+                            <div class="unit-stat-number">${stats.incomplete}</div>
+                            <div class="unit-stat-label">Remaining</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+
+
+        function renderBusinessUnits(businessUnitStats) {
+            const grid = document.getElementById('businessUnitsGrid');
+            let cardsHTML = '';
+
+
+
+
+            businessUnits.forEach(unit => {
+                const stats = businessUnitStats[unit] || { total: 0, completed: 0, incomplete: 0 };
+                cardsHTML += createBusinessUnitCard(unit, stats);
+            });
+
+
+
+
+            grid.innerHTML = cardsHTML;
+        }
+
+
+
+
+        // Business Units page functions
+        function createBusinessUnitDetailCard(unitCode, stats) {
+            const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+            const isOverallComplete = completionRate === 100;
+            
+            // Create visualization
+            const visualizationHTML = createBusinessUnitVisualization(unitCode, stats);
+            
+            let employeeTableHTML = '';
+            if (stats.employees && stats.employees.length > 0) {
+                const totalEmployees = stats.employees.length;
+                
+                employeeTableHTML = `
+                    <div class="table-info">
+                        <span class="table-info-text">Employee Details</span>
+                        <span class="table-info-count">
+                            Showing all ${totalEmployees} employees (scroll for more)
+                        </span>
+                    </div>
+                    <div class="employee-table-container">
+                        <table class="employee-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Supervisor</th>
+                                    <th>% Earned</th>
+                                    <th>Required</th>
+                                    <th>Earned</th>
+                                    <th>Remaining</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stats.employees.map(emp => `
+                                    <tr>
+                                        <td>${emp.employee}</td>
+                                        <td>${emp.supervisor}</td>
+                                        <td>${emp.percentEarned || 0}%</td>
+                                        <td>${emp.required}</td>
+                                        <td>${emp.earned}</td>
+                                        <td>${emp.remaining.toFixed(1)}</td>
+                                        <td>
+                                            <span class="completion-status ${isComplete(emp.remaining) ? 'complete' : 'incomplete'}">
+                                                ${isComplete(emp.remaining) ? 'Complete' : 'Incomplete'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            const displayName = businessUnitDisplayNames[unitCode] || unitCode;
+            return `
+                <div class="business-unit-detail-card" id="business-unit-${unitCode}">
+                    <div class="business-unit-detail-header">
+                        <h2 class="business-unit-title">${displayName}</h2>
+                        <div class="business-unit-status">
+                            <div class="status-indicator ${isOverallComplete ? 'complete' : 'incomplete'}"></div>
+                            <div class="status-badge ${isOverallComplete ? 'status-complete' : 'status-incomplete'}">
+                                ${isOverallComplete ? 'Complete' : 'Incomplete'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="business-unit-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">${stats.total}</div>
+                            <div class="metric-label">Total Employees</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${stats.completed}</div>
+                            <div class="metric-label">Completed</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${stats.incomplete}</div>
+                            <div class="metric-label">Incomplete</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${completionRate}%</div>
+                            <div class="metric-label">Completion Rate</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${completionRate}%"></div>
+                    </div>
+                    
+                    ${visualizationHTML}
+                    
+                    ${employeeTableHTML}
+                </div>
+            `;
+        }
+
+
+
+
+        function loadBusinessUnitsPage() {
+            const loading = document.getElementById('loading-business-units');
+            const container = document.getElementById('businessUnitsDetailContainer');
+            
+            loading.style.display = 'block';
+            container.style.display = 'none';
+            
+            setTimeout(() => {
+                const businessUnitStats = processBusinessUnitData(clpData);
+                let detailHTML = '';
+                
+                businessUnits.forEach(unit => {
+                    const stats = businessUnitStats[unit] || { total: 0, completed: 0, incomplete: 0, employees: [] };
+                    detailHTML += createBusinessUnitDetailCard(unit, stats);
+                });
+                
+                container.innerHTML = detailHTML;
+                loading.style.display = 'none';
+                container.style.display = 'block';
+            }, 500);
+        }
+
+
+
+
+        function loadIndividualBusinessUnitPage(unitCode) {
+            const container = document.getElementById(`${unitCode}-content`);
+            const businessUnitStats = processBusinessUnitData(clpData);
+            const stats = businessUnitStats[unitCode] || { total: 0, completed: 0, incomplete: 0, employees: [] };
+            
+            container.innerHTML = createBusinessUnitDetailCard(unitCode, stats);
+        }
+
+
+
+
+        // Main data loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const grid = document.getElementById('businessUnitsGrid');
+            
+            if (show) {
+                loading.style.display = 'block';
+                grid.style.display = 'none';
+            } else {
+                loading.style.display = 'none';
+                grid.style.display = 'grid';
+            }
+        }
+
+
+
+
+        async function loadDashboardData() {
+            showLoading(true);
+            
+            try {
+                console.log('=== LOADING DASHBOARD DATA ===');
+                
+                clpData = await new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .getDashboardData();
+                });
+                
+                console.log('Data received from Google Apps Script:', clpData);
+                console.log('Number of records:', clpData ? clpData.length : 0);
+                
+                if (clpData && clpData.length > 0) {
+                    console.log('First 10 records from Google Apps Script with range values:');
+                    clpData.slice(0, 10).forEach((record, index) => {
+                        console.log(`Record ${index}: employee="${record.employee}", orgCode="${record.orgCode}", range="${record.range}", percentEarned="${record.percentEarned}"`);
+                    });
+                    
+                    // Show all unique range values found in the actual data
+                    const uniqueRanges = [...new Set(clpData.map(emp => emp.range))];
+                    console.log('ALL UNIQUE RANGE VALUES IN ACTUAL DATA:', uniqueRanges);
+                    
+                    // Count each range value
+                    const rangeCounts = {};
+                    clpData.forEach(emp => {
+                        const range = emp.range;
+                        rangeCounts[range] = (rangeCounts[range] || 0) + 1;
+                    });
+                    console.log('RANGE VALUE COUNTS:', rangeCounts);
+                }
+                
+                if (!clpData || clpData.length === 0) {
+                    console.log('No data from Google Apps Script, using sample data');
+                    clpData = generateSampleData();
+                    console.log('Generated sample data, first 3 records:');
+                    clpData.slice(0, 3).forEach((record, index) => {
+                        console.log(`Sample Record ${index}:`, record);
+                    });
+                }
+                
+                const businessUnitStats = processBusinessUnitData(clpData);
+                updateOverallStats(clpData);
+                renderBusinessUnits(businessUnitStats);
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                console.log('Falling back to sample data due to error');
+                clpData = generateSampleData();
+                
+                const businessUnitStats = processBusinessUnitData(clpData);
+                updateOverallStats(clpData);
+                renderBusinessUnits(businessUnitStats);
+                
+                setTimeout(() => {
+                    alert('Error loading live data. Showing sample data. Please check if processLatestCLPDataRobust() has been run.');
+                }, 1000);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+
+
+
+        // Auto-refresh every 5 minutes
+        setInterval(() => {
+            if (currentPage === 'overview') {
+                loadDashboardData();
+            }
+        }, 5 * 60 * 1000);
+
+
+
+
+  </script>
+</body>
+
+
+
+
+</html>
+
+
