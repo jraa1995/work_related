@@ -1278,6 +1278,7 @@
     margin: 20px 0;
     position: relative;
   }
+
   .supervisor-search-input {
     width: 100%;
     padding: 8px 12px;
@@ -1285,6 +1286,7 @@
     border-radius: 5px;
     font-size: 0.9rem;
   }
+
   .supervisor-suggestions {
     position: absolute;
     top: 100%;
@@ -1296,15 +1298,64 @@
     max-height: 200px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     display: none;
   }
+
   .supervisor-suggestion-item {
     padding: 8px 12px;
     cursor: pointer;
     font-size: 0.9rem;
   }
+
   .supervisor-suggestion-item:hover {
+    background: var(--brand-lightGrey);
+  }
+
+  /* Employee filter styles */
+  .search-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .employee-filter,
+  .supervisor-filter {
+    flex: 1;
+    position: relative;
+  }
+
+  .employee-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--brand-mediumGrey);
+    border-radius: 5px;
+    font-size: 0.9rem;
+  }
+
+  .employee-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--brand-bg-light);
+    border: 1px solid var(--brand-lightGrey);
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: none;
+  }
+
+  .employee-suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .employee-suggestion-item:hover {
     background: var(--brand-lightGrey);
   }
 
